@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@theme {
+  --color-brand-blue: #384ce5;
+  --color-brand-red: #e5383b;
+
+  --font-sans: "Poppins", sans-serif;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
