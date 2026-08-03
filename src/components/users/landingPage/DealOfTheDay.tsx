@@ -188,7 +188,7 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
         </div>
 
         {/* Details */}
-        <div className="flex flex-1 flex-col gap-2 text-left">
+        <div className="flex w-full flex-1 flex-col gap-2 text-left">
           <h3
             onClick={goToProduct}
             className="cursor-pointer text-base font-bold leading-snug text-gray-900 hover:text-[#3654D6] sm:text-lg"

@@ -7,7 +7,8 @@ export function RecentlyViewed() {
 
   const products = viewedIds
     .map((id) => getProductById(id))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .slice(0, 6); // 👈 Limit to maximum 6 products
 
   if (products.length === 0) return null;
 
@@ -17,20 +18,23 @@ export function RecentlyViewed() {
         Recently Viewed
       </h2>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
 
-      <div className="mt-8 flex justify-center">
-        <button
-          type="button"
-          className="cursor-pointer rounded-full border border-[#3654D6] px-8 py-2.5 text-sm font-semibold text-[#3654D6] transition-colors hover:bg-[#3654D6] hover:text-white"
-        >
-          View All
-        </button>
-      </div>
+      {/* Only show "View All" button if there are more than 6 products */}
+      {viewedIds.length > 6 && (
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            className="cursor-pointer rounded-full border border-[#3654D6] px-8 py-2.5 text-sm font-semibold text-[#3654D6] transition-colors hover:bg-[#3654D6] hover:text-white"
+          >
+            View All
+          </button>
+        </div>
+      )}
     </section>
   );
 }
