@@ -1,18 +1,10 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Tabs } from "@heroui/react";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { ProductCard, type Product } from "./ProductCard";
+import { ProductCard } from "./ProductCard";
 import { useInfiniteScroll } from "./useInfiniteScroll";
-import hdmiCable from "../../../assets/hdmi.jpg";
+import { MOCK_SEARCH_ITEMS, type MockProduct } from "../../../data/mockSearchItems";
 
-/**
- * NOTE ON CATEGORIES
- * -----------------------------------------------------------------------
- * These 10 are placeholders. Once the backend exposes the real
- * "top 10 categories" endpoint, swap this array for that response —
- * everything else (tabs, per-tab filtering, infinite scroll) stays
- * exactly the same.
- */
 const CATEGORIES = [
   { id: "fashion", label: "Fashion" },
   { id: "electronics", label: "Electronics" },
@@ -26,60 +18,49 @@ const CATEGORIES = [
   { id: "phones-tablets", label: "Phones & Tablets" },
 ];
 
-// "Recommended" is first and selected by default — remove this line and
-// use CATEGORIES directly if you only want the 10 plain category tabs.
 const TABS = [{ id: "recommended", label: "Recommended" }, ...CATEGORIES];
 
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 6;
 
-/**
- * Temporary mock data generator — swap for a real paginated API call
- * later (e.g. GET /products?category=X&page=Y). Signature deliberately
- * mirrors what that real call will look like, so swapping it out later
- * is a one-line change inside loadMore below.
- */
-function generateMockBatch(categoryId: string, page: number): Product[] {
-  return Array.from({ length: BATCH_SIZE }).map((_, i) => {
-    const seed = page * BATCH_SIZE + i;
-    return {
-      id: `${categoryId}-${seed}`,
-      name: "Original HDMI Cable 1080p High Speed",
-      price: 5000 + (seed % 5) * 500,
-      originalPrice: 9500,
-      discountPercent: 10 + (seed % 4) * 5,
-      rating: 3 + (seed % 3) * 0.5,
-      soldCount: 10 + (seed % 20),
-      image: hdmiCable,
-    };
-  });
+function getCategoryProducts(categoryId: string): MockProduct[] {
+  if (categoryId === "recommended") return MOCK_SEARCH_ITEMS;
+  return MOCK_SEARCH_ITEMS.filter((item) => item.categoryId === categoryId);
 }
 
 function CategoryProductGrid({ categoryId }: { categoryId: string }) {
-  const [products, setProducts] = useState<Product[]>(() =>
-    generateMockBatch(categoryId, 0)
+  const allProducts = useMemo(() => getCategoryProducts(categoryId), [categoryId]);
+  const [visibleCount, setVisibleCount] = useState(
+    Math.min(BATCH_SIZE, allProducts.length)
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const pageRef = useRef(0);
   const isLoadingRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const hasMore = visibleCount < allProducts.length;
 
   const loadMore = useCallback(() => {
-    if (isLoadingRef.current) return;
+    if (!hasMore || isLoadingRef.current) return;
     isLoadingRef.current = true;
     setIsLoading(true);
 
-    // Simulated network delay — remove once this is wired to a real API
+    // Simulated network delay — remove once this is wired to a real,
+    // paginated API call.
     setTimeout(() => {
-      pageRef.current += 1;
-      setProducts((prev) => [
-        ...prev,
-        ...generateMockBatch(categoryId, pageRef.current),
-      ]);
+      setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, allProducts.length));
       isLoadingRef.current = false;
       setIsLoading(false);
-    }, 500);
-  }, [categoryId]);
+    }, 400);
+  }, [hasMore, allProducts.length]);
 
   const sentinelRef = useInfiniteScroll(loadMore);
+  const products = allProducts.slice(0, visibleCount);
+
+  if (products.length === 0) {
+    return (
+      <p className="py-10 text-center text-sm text-gray-400">
+        No products in this category yet.
+      </p>
+    );
+  }
 
   return (
     <div>
@@ -89,15 +70,16 @@ function CategoryProductGrid({ categoryId }: { categoryId: string }) {
         ))}
       </div>
 
-      {/* Infinite scroll trigger + loading indicator */}
-      <div ref={sentinelRef} className="mt-8 flex justify-center">
-        {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading more...
-          </div>
-        )}
-      </div>
+      {hasMore && (
+        <div ref={sentinelRef} className="mt-8 flex justify-center">
+          {isLoading && (
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading more...
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -115,14 +97,12 @@ export function RecommendedFeed() {
   return (
     <section className="mt-4 w-full">
       <Tabs className="w-full bg-transparent" defaultSelectedKey="recommended">
-        {/* Heading pill */}
         <div className="w-full rounded-full bg-white px-6 py-4 shadow-sm">
           <h2 className="text-center text-lg font-bold text-[#3654D6] sm:text-xl">
             Select an Option
           </h2>
         </div>
 
-        {/* Tabs pill */}
         <div className="relative mt-4 w-full rounded-full bg-white px-4 py-3 shadow-sm sm:px-6">
           <Tabs.ListContainer className="bg-white">
             <div className="flex items-center gap-2">
@@ -165,10 +145,9 @@ export function RecommendedFeed() {
           </Tabs.ListContainer>
         </div>
 
-        {/* Product grid card — one panel per tab, each with its own independent infinite scroll */}
-        <div className="mt-4 w-full  rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+        <div className="mt-4 w-full rounded-3xl bg-white p-6 shadow-sm sm:p-8">
           {TABS.map((tab) => (
-            <Tabs.Panel key={tab.id} id={tab.id} >
+            <Tabs.Panel key={tab.id} id={tab.id}>
               <CategoryProductGrid categoryId={tab.id} />
             </Tabs.Panel>
           ))}

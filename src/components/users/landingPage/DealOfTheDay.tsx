@@ -1,20 +1,14 @@
 import { useEffect, useState } from "react";
-import brandOfTheDay from "../../../assets/brand-of-the-day.png";
-import b1 from "../../../assets/b1.jpg";
-import b2 from "../../../assets/b2.jpg";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router";
+import { getProductById } from "../../../data/mockSearchItems";
 
 interface DealOfTheDayProps {
-  productName?: string;
-  brand?: string;
-  productCode?: string;
-  rating?: number;
-  soldCount?: number;
-  currentPrice?: number;
-  originalPrice?: number;
-  discountPercent?: number;
+  /** Which product from the catalog to feature. Defaults to id "2"
+   *  (Samsung Galaxy S23 Ultra) — change this to whichever product you
+   *  want spotlighted as today's deal. */
+  productId?: string;
 }
-
-const thumbnails = [brandOfTheDay, b1, b2];
 
 function StarIcon({ className = "" }: { className?: string }) {
   return (
@@ -84,6 +78,7 @@ function CloseIcon() {
     </svg>
   );
 }
+
 function getMsUntilMidnight() {
   const now = new Date();
   const endOfDay = new Date(
@@ -120,26 +115,29 @@ function useCountdownToMidnight() {
   };
 }
 
-export function DealOfTheDay({
-  productName = "Xioma Redmi Note 11 Pro 256GB 2023, Black Smartphone",
-  brand = "Redmi",
-  productCode = "2581934",
-  rating = 3.5,
-  soldCount = 96,
-  currentPrice = 256900,
-  originalPrice = 348450,
-  discountPercent = 20,
-}: DealOfTheDayProps) {
-  const [activeImage, setActiveImage] = useState(thumbnails[0]);
+export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
+  const product = getProductById(productId);
+  const navigate = useNavigate();
+  const { hours, minutes, seconds } = useCountdownToMidnight();
+
+  const [activeImage, setActiveImage] = useState(product?.images[0]);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { hours, minutes, seconds } = useCountdownToMidnight();
+
+  // Keep the gallery in sync if productId ever changes at runtime.
+  useEffect(() => {
+    setActiveImage(product?.images[0]);
+  }, [product]);
+
+  if (!product) return null; // bad productId passed in — fail quietly
 
   const countdownUnits = [
     { label: "Hours", value: hours },
     { label: "Minutes", value: minutes },
     { label: "Seconds", value: seconds },
   ];
+
+  const goToProduct = () => navigate(`/product/${product.id}`);
 
   return (
     <section className="w-full rounded-3xl bg-white p-6 shadow-sm sm:p-8">
@@ -162,18 +160,18 @@ export function DealOfTheDay({
           >
             <img
               src={activeImage}
-              alt={productName}
+              alt={product.name}
               className="h-full w-full object-contain"
             />
           </div>
           <div className="flex flex-row gap-3 md:flex-col">
-            {thumbnails.map((thumb, index) => (
+            {product.images.map((thumb, index) => (
               <button
                 key={index}
                 type="button"
                 onClick={() => setActiveImage(thumb)}
                 aria-label={`Show product image ${index + 1}`}
-                className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border transition-colors sm:h-16 sm:w-16 ${
+                className={`h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border transition-colors sm:h-16 sm:w-16 ${
                   activeImage === thumb
                     ? "border-[#3654D6]"
                     : "border-gray-200 hover:border-gray-300"
@@ -191,31 +189,34 @@ export function DealOfTheDay({
 
         {/* Details */}
         <div className="flex flex-1 flex-col gap-2 text-left">
-          <h3 className="text-base font-bold leading-snug text-gray-900 sm:text-lg">
-            {productName}
+          <h3
+            onClick={goToProduct}
+            className="cursor-pointer text-base font-bold leading-snug text-gray-900 hover:text-[#3654D6] sm:text-lg"
+          >
+            {product.name}
           </h3>
           <p className="text-sm text-gray-500">
-            Brand: <span className="font-medium text-[#3654D6]">{brand}</span>
+            Brand: <span className="font-medium text-[#3654D6]">{product.brand}</span>
           </p>
-          <p className="text-sm text-gray-500">Product Code: {productCode}</p>
+          <p className="text-sm text-gray-500">Product Code: {product.productCode}</p>
 
           <div className="mt-1 flex items-center gap-3">
-            <StarRating rating={rating} />
-            <span className="text-xs text-gray-400">{rating}</span>
+            <StarRating rating={product.rating} />
+            <span className="text-xs text-gray-400">{product.rating}</span>
             <span className="ml-auto text-xs text-gray-500">
-              {soldCount} Sold
+              {product.soldCount} Sold
             </span>
           </div>
 
           <div className="mt-1 flex items-center gap-3">
             <span className="text-lg font-bold text-[#3654D6] sm:text-xl">
-              ₦{currentPrice.toLocaleString()}
+              ₦{product.price.toLocaleString()}
             </span>
             <span className="text-sm text-gray-400 line-through">
-              ₦{originalPrice.toLocaleString()}
+              ₦{product.originalPrice.toLocaleString()}
             </span>
             <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs font-semibold text-white">
-              -{discountPercent}%
+              -{product.discountPercent}%
             </span>
           </div>
 
@@ -259,6 +260,7 @@ export function DealOfTheDay({
 
           <button
             type="button"
+            onClick={goToProduct}
             className="mt-3 w-full cursor-pointer rounded-full bg-[#3654D6] py-3 font-semibold text-white transition-colors hover:bg-[#2d47bd]"
           >
             View Details
@@ -266,27 +268,59 @@ export function DealOfTheDay({
         </div>
       </div>
 
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setIsModalOpen(false)}
-        >
-          <button
-            type="button"
+      {isModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-black/90 p-4 sm:p-8"
             onClick={() => setIsModalOpen(false)}
-            aria-label="Close image preview"
-            className="absolute right-4 top-4 cursor-pointer text-white transition-opacity hover:opacity-80"
           >
-            <CloseIcon />
-          </button>
-          <img
-            src={activeImage}
-            alt={productName}
-            onClick={(e) => e.stopPropagation()}
-            className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
-          />
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              aria-label="Close image preview"
+              className="absolute right-4 top-4 z-10 cursor-pointer text-white transition-opacity hover:opacity-80"
+            >
+              <CloseIcon />
+            </button>
+
+            <div
+              className="flex max-h-[70vh] w-full max-w-4xl items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={activeImage}
+                alt={product.name}
+                className="max-h-[70vh] max-w-full object-contain"
+              />
+            </div>
+
+            <div
+              className="flex shrink-0 flex-row gap-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {product.images.map((thumb, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveImage(thumb)}
+                  aria-label={`Show product image ${index + 1}`}
+                  className={`h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-colors sm:h-16 sm:w-16 ${
+                    activeImage === thumb
+                      ? "border-white"
+                      : "border-white/30 hover:border-white/70"
+                  }`}
+                >
+                  <img
+                    src={thumb}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>,
+          document.body
+        )}
     </section>
   );
 }

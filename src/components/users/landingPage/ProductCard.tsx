@@ -1,21 +1,5 @@
 import { useState } from "react";
-
-/**
- * ProductCard (shared)
- * -----------------------------------------------------------------------
- * Extracted from BestSellingProducts.tsx so every section that shows a
- * product grid (Best Selling, Recommended Feed, Wishlist, Search Results,
- * Flash Sales, etc.) renders the exact same card. Tweak the design once
- * here and every section using it updates automatically.
- *
- * If you haven't already, update BestSellingProducts.tsx to import from
- * here instead of keeping its own local copy of these components:
- *
- *   import { ProductCard, type Product } from "../product/ProductCard";
- *
- * ...and delete its local StarIcon / Star / StarRating / HeartIcon /
- * ProductCard / Product definitions.
- */
+import { Link } from "react-router";
 
 export interface Product {
   id: string;
@@ -80,7 +64,10 @@ export function ProductCard({ product }: { product: Product }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   return (
-    <div className="flex flex-col text-left p-2 transition-shadow duration-200 hover:shadow-lg rounded-xl cursor-pointer hover:scale-105 transition-transform">
+    <Link
+      to={`/product/${product.id}`}
+      className="flex flex-col text-left p-2 transition-shadow duration-200 hover:shadow-lg rounded-xl cursor-pointer hover:scale-105 transition-transform"
+    >
       <div className="aspect-square w-full overflow-hidden rounded-xl bg-gray-50">
         <img src={product.image} alt={product.name} className="h-full w-full object-contain" />
       </div>
@@ -93,7 +80,13 @@ export function ProductCard({ product }: { product: Product }) {
         </span>
         <button
           type="button"
-          onClick={() => setIsWishlisted((prev) => !prev)}
+          onClick={(e) => {
+            // Stop the click from bubbling up to the Link — otherwise
+            // toggling the wishlist would also navigate to the product page.
+            e.preventDefault();
+            e.stopPropagation();
+            setIsWishlisted((prev) => !prev);
+          }}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={isWishlisted}
           className="cursor-pointer p-1 rounded-full hover:bg-blue-50 transition-colors"
@@ -116,6 +109,6 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="mt-1">
         <StarRating rating={product.rating} />
       </div>
-    </div>
+    </Link>
   );
 }

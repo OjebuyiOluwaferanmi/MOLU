@@ -5,7 +5,7 @@ import promoTwo from "../../../assets/promo-two.png";
 export function Promo() {
   return (
     <section className="w-full">
-      <div className="flex flex-col mb-4 lg:flex-row gap-4 sm:gap-5 md:gap-6 w-full">
+      <div className="flex flex-col mb-4 mt-4 lg:flex-row gap-4 sm:gap-5 md:gap-6 w-full">
         {/* Mid-Year Sale card */}
         <div
           className="relative flex-1 min-w-0 overflow-hidden rounded-2xl md:rounded-3xl bg-cover bg-center flex flex-col justify-center px-5 py-6 sm:px-8 sm:py-8 md:px-10 md:py-10"
