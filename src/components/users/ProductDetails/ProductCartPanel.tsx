@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Check, Heart } from "lucide-react";
 import type { MockProduct } from "../../../data/mockSearchItems";
+import { useCart } from "../../users/CartPage/CartContext";
 
 interface ProductCartPanelProps {
   product: MockProduct;
@@ -8,6 +10,8 @@ interface ProductCartPanelProps {
   onDecrement: () => void;
   isWishlisted: boolean;
   onToggleWishlist: () => void;
+  selectedColor?: string;
+  selectedMemory?: string;
 }
 
 /** Sticky right-hand price/cart card — total price, stock badge, quantity
@@ -19,7 +23,18 @@ export function ProductCartPanel({
   onDecrement,
   isWishlisted,
   onToggleWishlist,
+  selectedColor,
+  selectedMemory,
 }: ProductCartPanelProps) {
+  const { addToCart } = useCart();
+  const [justAdded, setJustAdded] = useState(false);
+
+  const handleAddToCart = () => {
+    addToCart({ productId: product.id, quantity, selectedColor, selectedMemory });
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1500);
+  };
+
   return (
     <aside className="flex w-full shrink-0 flex-col gap-5 rounded-3xl bg-white p-6 shadow-sm sm:p-8 lg:w-72 lg:sticky lg:top-24 lg:self-start">
       <div>
@@ -61,9 +76,10 @@ export function ProductCartPanel({
 
         <button
           type="button"
+          onClick={handleAddToCart}
           className="mt-5 w-full cursor-pointer rounded-full bg-[#3654D6] py-3.5 text-base font-bold text-white transition-colors hover:bg-[#2d47bd]"
         >
-          Add to Cart
+          {justAdded ? "Added to Cart ✓" : "Add to Cart"}
         </button>
       </div>
 

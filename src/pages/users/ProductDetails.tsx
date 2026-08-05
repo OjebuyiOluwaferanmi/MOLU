@@ -16,6 +16,7 @@ import { getProductById } from "../../data/mockSearchItems";
 import { useRecentlyViewed } from "../../hooks/useRecentlyViewed";
 import { RelatedProducts } from "../../components/users/ProductDetails/RelatedProducts";
 import { RecentlyViewed } from "../../components/users/landingPage/RecentlyViewed";
+import { Footer } from "../../components/users/common/Footer";
 
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
@@ -108,13 +109,15 @@ export default function ProductDetails() {
         </div>
 
         <ProductCartPanel
-          product={product}
-          quantity={quantity}
-          onIncrement={() => setQuantity((q) => q + 1)}
-          onDecrement={() => setQuantity((q) => Math.max(1, q - 1))}
-          isWishlisted={isWishlisted}
-          onToggleWishlist={() => setIsWishlisted((prev) => !prev)}
-        />
+  product={product}
+  quantity={quantity}
+  onIncrement={() => setQuantity((q) => q + 1)}
+  onDecrement={() => setQuantity((q) => Math.max(1, q - 1))}
+  isWishlisted={isWishlisted}
+  onToggleWishlist={() => setIsWishlisted((prev) => !prev)}
+  selectedColor={selectedColor}
+  selectedMemory={selectedMemory}
+/>
       </div>
     </div>
   </Fade>
@@ -130,6 +133,10 @@ export default function ProductDetails() {
         <PageContainer>
           <RecentlyViewed />
         </PageContainer>
+      </Fade>
+
+      <Fade triggerOnce direction="up" duration={600} delay={200}>
+          <Footer />
       </Fade>
 
 

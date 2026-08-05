@@ -2,6 +2,7 @@ import { Tabs } from "@heroui/react";
 import { SlidersHorizontal, ChevronDown, User as UserIcon } from "lucide-react";
 import type { MockProduct } from "../../../data/mockSearchItems";
 import { StarRating } from "./icons";
+import { ImageCarousel } from "./ImageCarousel";
 
 interface ProductDetailsTabsProps {
   product: MockProduct;
@@ -87,22 +88,12 @@ export function ProductDetailsTabs({ product, onOpenPreview }: ProductDetailsTab
 
             <div>
               <h3 className="mb-3 font-semibold text-gray-900">Images</h3>
-              <div className="flex flex-col items-center gap-4">
-                {product.images.map((img, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => onOpenPreview(img)}
-                    aria-label={`Open image ${index + 1}`}
-                    className="w-full max-w-sm cursor-pointer overflow-hidden rounded-xl bg-gray-50"
-                  >
-                    <img
-                      src={img}
-                      alt={`${product.name} image ${index + 1}`}
-                      className="h-auto w-full object-contain"
-                    />
-                  </button>
-                ))}
+              <div className="flex justify-center">
+                <ImageCarousel
+                  images={product.images}
+                  productName={product.name}
+                  onOpenPreview={onOpenPreview}
+                />
               </div>
             </div>
           </div>

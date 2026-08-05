@@ -1,18 +1,15 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { ArrowUp, ShoppingCart } from "lucide-react";
+import { useCart } from "../../users/CartPage/CartContext";
 
 // Percentage of total scrollable page height the user must pass before the
 // scroll-to-top button appears. Tweak to taste.
 const SCROLL_THRESHOLD_PERCENT = 5;
 
-interface ScrollFabProps {
-  // TEMP: wire this up to real cart state once the backend/cart context
-  // exists — for now it's just a prop so the badge can be previewed.
-  cartCount?: number;
-}
-
-export function ScrollFab({ cartCount = 0 }: ScrollFabProps) {
+export function ScrollFab() {
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const { cartCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,12 +34,12 @@ export function ScrollFab({ cartCount = 0 }: ScrollFabProps) {
 
   return (
     <div className="fixed bottom-6 right-4 z-40 flex flex-col items-center gap-3 sm:right-6">
-      {/* Cart button — only on smaller screens, matching the breakpoint
-          where the Navbar collapses its own cart link into the hamburger menu */}
-      <a
-        href="/cart"
+      {/* Cart button — now shown on all screen sizes, same behavior as
+          before (badge count, hover scale) just no longer hidden on lg+ */}
+      <Link
+        to="/cart"
         aria-label={`View cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
-        className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#3654D6] text-white shadow-lg transition-transform hover:scale-105 lg:hidden"
+        className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#3654D6] text-white shadow-lg transition-transform hover:scale-105"
       >
         <ShoppingCart className="h-5 w-5" />
         {cartCount > 0 && (
@@ -50,7 +47,7 @@ export function ScrollFab({ cartCount = 0 }: ScrollFabProps) {
             {cartCount > 99 ? "99+" : cartCount}
           </span>
         )}
-      </a>
+      </Link>
 
       {showScrollTop && (
         <button
