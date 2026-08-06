@@ -9,17 +9,16 @@ interface SocialAuthButtonsProps {
 // presentational only for now.
 export function SocialAuthButtons({ actionLabel }: SocialAuthButtonsProps) {
   return (
-    <div className="flex flex-col gap-3">
-      <button
+    <div className="flex flex-col gap-2">      <button
         type="button"
-        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
       >
         <GoogleIcon />
         {actionLabel} with Google
       </button>
       <button
         type="button"
-        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
       >
         <FacebookIcon />
         {actionLabel} with Facebook

@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { Calendar, DateField, DatePicker, Dropdown, Label, Button } from "@heroui/react";
 import { AuthLayout } from "../../components/users/Auth/AuthLayout";
 import { SocialAuthButtons } from "../../components/users/Auth/SocialAuthButtons";
 import { AuthDivider } from "../../components/users/Auth/AuthDivider";
 
-// Trimmed placeholder list — swap for a full ISO country list (or a
-// dedicated package) once this is wired up for real.
 const COUNTRIES = [
   "Nigeria",
   "Ghana",
@@ -20,11 +19,45 @@ const COUNTRIES = [
   "India",
 ];
 
+const GENDERS = [
+  { id: "female", label: "Female" },
+  { id: "male", label: "Male" },
+  { id: "other", label: "Other" },
+  { id: "prefer-not-to-say", label: "Prefer not to say" },
+];
+
 const inputClass =
-  "rounded-full border border-gray-200 px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[#3654D6] focus:outline-none";
+  "rounded-full border border-gray-200 px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[#3654D6] focus:outline-none";
+
+/** Styled trigger button shared by the Country and Gender dropdowns —
+ * matches the pill look of the other inputs on this form. */
+function DropdownField({
+  label,
+  value,
+  placeholder,
+}: {
+  label: string;
+  value: string | null;
+  placeholder: string;
+}) {
+  return (
+    <Button
+      variant="secondary"
+      aria-label={label}
+      className={`flex w-full cursor-pointer items-center justify-between !rounded-full !border !border-gray-200 !bg-white !px-4 !py-2.5 !text-left !text-sm !shadow-none hover:!border-gray-300 ${
+        value ? "!text-gray-700" : "!text-gray-400"
+      }`}
+    >
+      {value ?? placeholder}
+      <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+    </Button>
+  );
+}
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
+  const [country, setCountry] = useState<string | null>(null);
+  const [gender, setGender] = useState<string | null>(null);
 
   // TODO: wire up to real auth once the backend exists — UI only for now.
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,168 +68,177 @@ export default function Signup() {
     <AuthLayout title="Create your account" subtitle="Sign up to start shopping on Molu">
       <SocialAuthButtons actionLabel="Sign up" />
 
-      <div className="my-6">
+      <div className="my-4">
         <AuthDivider />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
-        {/* Name row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-left">
+        <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
               First Name
             </label>
-            <input id="firstName" type="text" required placeholder="John" className={inputClass} />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="middleName" className="text-sm font-medium text-gray-700">
-              Middle Name <span className="font-normal text-gray-400">(optional)</span>
-            </label>
-            <input id="middleName" type="text" placeholder="Kolawole" className={inputClass} />
+            <input id="firstName" type="text" required placeholder="oluwaferanmi" className={inputClass} />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
               Last Name
             </label>
-            <input id="lastName" type="text" required placeholder="Doe" className={inputClass} />
+            <input id="lastName" type="text" required placeholder="ojebuyi" className={inputClass} />
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="email" className="text-sm font-medium text-gray-700">
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            placeholder="you@example.com"
-            className={inputClass}
-          />
-        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="email" className="text-xs font-medium text-gray-700">
+              Email Address
+            </label>
+            <input id="email" type="email" required placeholder="you@example.com" className={inputClass} />
+          </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="password" className="text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              required
-              placeholder="Create a password"
-              className={`w-full pr-11 ${inputClass}`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600"
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="password" className="text-xs font-medium text-gray-700">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Create a password"
+                className={`w-full pr-10 ${inputClass}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Phone + Country */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="phone" className="text-xs font-medium text-gray-700">
               Phone Number
             </label>
-            <input
-              id="phone"
-              type="tel"
-              required
-              placeholder="+234 800 000 0000"
-              className={inputClass}
-            />
+            <input id="phone" type="tel" required placeholder="+234 800 000 0000" className={inputClass} />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="country" className="text-sm font-medium text-gray-700">
-              Country
-            </label>
-            <select
-              id="country"
-              required
-              defaultValue=""
-              className={`cursor-pointer appearance-none bg-white ${inputClass}`}
-            >
-              <option value="" disabled>
-                Select country
-              </option>
-              {COUNTRIES.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
+          {/* Country — HeroUI Dropdown styled as a pill trigger */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-700">Country</span>
+            <Dropdown>
+              <DropdownField label="Country" value={country} placeholder="Select country" />
+              <Dropdown.Popover className="min-w-[220px] bg-white text-black shadow-lg">                <Dropdown.Menu onAction={(key) => setCountry(String(key))}>
+                  {COUNTRIES.map((c) => (
+                    <Dropdown.Item key={c} id={c} textValue={c}>
+                      <Label className="text-black">{c}</Label>
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
           </div>
         </div>
 
-        {/* DOB + Gender */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="dob" className="text-sm font-medium text-gray-700">
-              Date of Birth
-            </label>
-            <input
-              id="dob"
-              type="date"
-              required
-              className={`cursor-pointer ${inputClass}`}
-            />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* Date of Birth — HeroUI DatePicker */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-700">Date of Birth</span>
+            <DatePicker className="w-full" name="dob" aria-label="Date of Birth">
+              <DateField.Group
+  fullWidth
+  className="!rounded-full !border !border-gray-200 !bg-white !px-4 !py-2.5 !shadow-none focus-within:!border-[#3654D6]"
+>
+                <DateField.Input>
+                  {(segment) => <DateField.Segment segment={segment} className="text-sm text-gray-700" />}
+                </DateField.Input>
+                <DateField.Suffix>
+                  <DatePicker.Trigger className="cursor-pointer text-gray-400 hover:text-gray-600">
+                    <DatePicker.TriggerIndicator />
+                  </DatePicker.Trigger>
+                </DateField.Suffix>
+              </DateField.Group>
+              <DatePicker.Popover>
+                <Calendar aria-label="Date of birth">
+                  <Calendar.Header>
+                    <Calendar.YearPickerTrigger>
+                      <Calendar.YearPickerTriggerHeading />
+                      <Calendar.YearPickerTriggerIndicator />
+                    </Calendar.YearPickerTrigger>
+                    <Calendar.NavButton slot="previous" />
+                    <Calendar.NavButton slot="next" />
+                  </Calendar.Header>
+                  <Calendar.Grid>
+                    <Calendar.GridHeader>
+                      {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                    </Calendar.GridHeader>
+                    <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                  </Calendar.Grid>
+                  <Calendar.YearPickerGrid>
+                    <Calendar.YearPickerGridBody>
+                      {({ year }) => <Calendar.YearPickerCell year={year} />}
+                    </Calendar.YearPickerGridBody>
+                  </Calendar.YearPickerGrid>
+                </Calendar>
+              </DatePicker.Popover>
+            </DatePicker>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="gender" className="text-sm font-medium text-gray-700">
-              Gender
-            </label>
-            <select
-              id="gender"
-              required
-              defaultValue=""
-              className={`cursor-pointer appearance-none bg-white ${inputClass}`}
-            >
-              <option value="" disabled>
-                Select gender
-              </option>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
-              <option value="other">Other</option>
-              <option value="prefer-not-to-say">Prefer not to say</option>
-            </select>
+          {/* Gender — HeroUI Dropdown styled as a pill trigger */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-700">Gender</span>
+            <Dropdown>
+              <DropdownField
+                label="Gender"
+                value={GENDERS.find((g) => g.id === gender)?.label ?? null}
+                placeholder="Select gender"
+              />
+              <Dropdown.Popover className="min-w-[220px] bg-white text-black shadow-lg">
+                <Dropdown.Menu onAction={(key) => setGender(String(key))}>
+                  {GENDERS.map((g) => (
+                    <Dropdown.Item key={g.id} id={g.id} textValue={g.label}>
+                      <Label className="text-black">{g.label}</Label>
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
           </div>
         </div>
 
-        <label className="flex cursor-pointer items-start gap-2 text-xs text-gray-500">
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl bg-gray-50 px-3.5 py-2.5 text-[11px] leading-relaxed text-gray-600">
           <input
             type="checkbox"
             required
-            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-[#3654D6] focus:ring-[#3654D6]"
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-gray-300 text-[#3654D6] focus:ring-[#3654D6]"
           />
-          I agree to Molu's{" "}
-          <Link to="/terms" className="cursor-pointer font-medium text-[#3654D6] hover:underline">
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link to="/privacy" className="cursor-pointer font-medium text-[#3654D6] hover:underline">
-            Privacy Policy
-          </Link>
+          <span>
+            I agree to Molu's{" "}
+            <Link to="/terms" className="cursor-pointer font-medium text-[#3654D6] hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link to="/privacy" className="cursor-pointer font-medium text-[#3654D6] hover:underline">
+              Privacy Policy
+            </Link>
+          </span>
         </label>
 
         <button
           type="submit"
-          className="mt-1 w-full cursor-pointer rounded-full bg-[#3654D6] py-3.5 text-base font-bold text-white transition-colors hover:bg-[#2d47bd]"
+          className="mt-1 w-full cursor-pointer rounded-full bg-[#3654D6] py-3 text-sm font-bold text-white transition-colors hover:bg-[#2d47bd]"
         >
           Create Account
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-4 text-center text-xs text-gray-500">
         Already have an account?{" "}
         <Link to="/login" className="cursor-pointer font-semibold text-[#3654D6] hover:underline">
           Log in
