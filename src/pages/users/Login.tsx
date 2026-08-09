@@ -1,16 +1,37 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { AuthLayout } from "../../components/users/Auth/AuthLayout";
 import { SocialAuthButtons } from "../../components/users/Auth/SocialAuthButtons";
 import { AuthDivider } from "../../components/users/Auth/AuthDivider";
+import { useAuth } from "../../components/users/Auth/AuthContext";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // TODO: wire up to real auth once the backend exists — UI only for now.
-  const handleSubmit = (e: React.FormEvent) => {
+  // Set by RequireAuth (or anywhere else that redirects here) — where the
+  // user was actually trying to go before they got sent to log in.
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? "/";
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+
+    const result = login(email, password);
+    if (!result.success) {
+      setError(result.error);
+      return;
+    }
+
+    navigate(redirectTo, { replace: true });
   };
 
   return (
@@ -22,12 +43,25 @@ export default function Login() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+        {redirectTo !== "/" && !error && (
+          <p className="rounded-xl bg-blue-50 px-3.5 py-2.5 text-sm text-brand-blue">
+            Log in to continue where you left off.
+          </p>
+        )}
+
+        {error && (
+          <p role="alert" className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-brand-red">
+            {error}
+          </p>
+        )}
+
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm font-medium text-gray-700">
             Email Address
           </label>
           <input
             id="email"
+            name="email"
             type="email"
             required
             placeholder="you@example.com"
@@ -47,6 +81,7 @@ export default function Login() {
           <div className="relative">
             <input
               id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
               required
               placeholder="Enter your password"
@@ -72,7 +107,7 @@ export default function Login() {
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-500">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link to="/signup" className="cursor-pointer font-semibold text-[#3654D6] hover:underline">
           Sign up
         </Link>

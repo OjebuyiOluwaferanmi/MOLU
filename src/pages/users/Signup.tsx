@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
 import { Calendar, DateField, DatePicker, Dropdown, Label, Button } from "@heroui/react";
 import { AuthLayout } from "../../components/users/Auth/AuthLayout";
 import { SocialAuthButtons } from "../../components/users/Auth/SocialAuthButtons";
 import { AuthDivider } from "../../components/users/Auth/AuthDivider";
+import { useAuth } from "../../components/users/Auth/AuthContext";
 
 const COUNTRIES = [
   "Nigeria",
@@ -55,13 +56,45 @@ function DropdownField({
 }
 
 export default function Signup() {
+  const navigate = useNavigate();
+  const { signup } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [country, setCountry] = useState<string | null>(null);
   const [gender, setGender] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // TODO: wire up to real auth once the backend exists — UI only for now.
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const firstName = String(formData.get("firstName") ?? "").trim();
+    const lastName = String(formData.get("lastName") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+    const phone = String(formData.get("phone") ?? "").trim();
+
+    const result = signup({
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+      country,
+      gender,
+      // TODO: HeroUI's DatePicker value wasn't wired in yet — confirm its
+      // onChange/value API (likely returns a CalendarDate object, not a
+      // plain string) and capture it into state the same way country/
+      // gender are handled above, then swap this null for the real value.
+      dob: null,
+    });
+
+    if (!result.success) {
+      setError(result.error);
+      return;
+    }
+
+    navigate("/");
   };
 
   return (
@@ -73,19 +106,39 @@ export default function Signup() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-left">
+        {error && (
+          <p role="alert" className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-brand-red">
+            {error}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
               First Name
             </label>
-            <input id="firstName" type="text" required placeholder="oluwaferanmi" className={inputClass} />
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              required
+              placeholder="oluwaferanmi"
+              className={inputClass}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
               Last Name
             </label>
-            <input id="lastName" type="text" required placeholder="ojebuyi" className={inputClass} />
+            <input
+              id="lastName"
+              name="lastName"
+              type="text"
+              required
+              placeholder="ojebuyi"
+              className={inputClass}
+            />
           </div>
         </div>
 
@@ -94,7 +147,14 @@ export default function Signup() {
             <label htmlFor="email" className="text-xs font-medium text-gray-700">
               Email Address
             </label>
-            <input id="email" type="email" required placeholder="you@example.com" className={inputClass} />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@example.com"
+              className={inputClass}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -104,6 +164,7 @@ export default function Signup() {
             <div className="relative">
               <input
                 id="password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 required
                 placeholder="Create a password"
@@ -126,7 +187,14 @@ export default function Signup() {
             <label htmlFor="phone" className="text-xs font-medium text-gray-700">
               Phone Number
             </label>
-            <input id="phone" type="tel" required placeholder="+234 800 000 0000" className={inputClass} />
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              required
+              placeholder="+234 800 000 0000"
+              className={inputClass}
+            />
           </div>
 
           {/* Country — HeroUI Dropdown styled as a pill trigger */}
@@ -134,7 +202,8 @@ export default function Signup() {
             <span className="text-xs font-medium text-gray-700">Country</span>
             <Dropdown>
               <DropdownField label="Country" value={country} placeholder="Select country" />
-              <Dropdown.Popover className="min-w-[220px] bg-white text-black shadow-lg">                <Dropdown.Menu onAction={(key) => setCountry(String(key))}>
+              <Dropdown.Popover className="min-w-[220px] bg-white text-black shadow-lg">
+                <Dropdown.Menu onAction={(key) => setCountry(String(key))}>
                   {COUNTRIES.map((c) => (
                     <Dropdown.Item key={c} id={c} textValue={c}>
                       <Label className="text-black">{c}</Label>
@@ -147,14 +216,15 @@ export default function Signup() {
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Date of Birth — HeroUI DatePicker */}
+          {/* Date of Birth — HeroUI DatePicker. Not wired to submitted
+              data yet — see TODO above handleSubmit. */}
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-gray-700">Date of Birth</span>
             <DatePicker className="w-full" name="dob" aria-label="Date of Birth">
               <DateField.Group
-  fullWidth
-  className="!rounded-full !border !border-gray-200 !bg-white !px-4 !py-2.5 !shadow-none focus-within:!border-[#3654D6]"
->
+                fullWidth
+                className="!rounded-full !border !border-gray-200 !bg-white !px-4 !py-2.5 !shadow-none focus-within:!border-[#3654D6]"
+              >
                 <DateField.Input>
                   {(segment) => <DateField.Segment segment={segment} className="text-sm text-gray-700" />}
                 </DateField.Input>
@@ -219,7 +289,7 @@ export default function Signup() {
             className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-gray-300 text-[#3654D6] focus:ring-[#3654D6]"
           />
           <span>
-            I agree to Molu's{" "}
+            I agree to Molu&apos;s{" "}
             <Link to="/terms" className="cursor-pointer font-medium text-[#3654D6] hover:underline">
               Terms of Service
             </Link>{" "}

@@ -5,7 +5,6 @@ import {
   Label,
   Avatar,
   CloseButton,
-  Switch,
 } from "@heroui/react";
 import {
   Menu,
@@ -18,10 +17,9 @@ import {
 import PageContainer from "./PageContainer";
 import SearchBar from "./SearchBar";
 import Logo from "./logo";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useCart } from "../../users/CartPage/CartContext";
-
-const SHOW_DEV_TOGGLE = true;
+import { useAuth } from "../Auth/AuthContext";
 
 const CATEGORIES = [
   { id: "phones-tablets", label: "Phones & Tablets" },
@@ -40,27 +38,18 @@ const ALWAYS_VISIBLE_THRESHOLD = 10;
 const DIRECTION_DEADZONE = 5;
 
 export default function Navbar() {
-  const [isSignedIn, setIsSignedIn] = useState(false);
+  const { user, isSignedIn, logout } = useAuth();
   const { cartCount } = useCart();
+  const navigate = useNavigate();
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(
     typeof window !== "undefined" ? window.innerWidth >= 1024 : true
   );
 
-  // Hides (announcement bar + main nav row) on scroll down, shows on
-  // scroll up. On lg+ this is the entire header, so it fully hides/shows.
-  // Below lg, the search row lives in the same sliding wrapper but BELOW
-  // the top section — sliding the whole wrapper up by exactly the top
-  // section's height moves the search row to y=0 (visible) while the top
-  // section itself moves fully off-screen. Same transform, both screen
-  // sizes, no separate logic needed.
   const [hideTopSection, setHideTopSection] = useState(false);
   const lastScrollY = useRef(0);
 
-  // Measure the real rendered heights: headerTopHeight drives the slide
-  // distance AND the mobile drawer's top offset; searchRowHeight (0 on
-  // lg+ since that row is display:none there) feeds the spacer below.
   const headerTopRef = useRef<HTMLDivElement>(null);
   const searchRowRef = useRef<HTMLDivElement>(null);
   const [headerTopHeight, setHeaderTopHeight] = useState(0);
@@ -76,6 +65,17 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", updateHeights);
   }, [showAnnouncement, mobileMenuOpen, isLargeScreen]);
 
+  // Publish the navbar's total rendered height as a CSS variable so other
+  // components (e.g. AccountSidebar) can position themselves correctly
+  // below it without prop-drilling — stays accurate even as the
+  // announcement bar is dismissed, the mobile search row appears, etc.
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--navbar-offset",
+      `${headerTopHeight + searchRowHeight}px`
+    );
+  }, [headerTopHeight, searchRowHeight]);
+
   useEffect(() => {
     const handleResize = () => {
       const large = window.innerWidth >= 1024;
@@ -86,8 +86,6 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Force the top section visible whenever the mobile drawer is open —
-  // its trigger button lives inside that section, so it must stay shown.
   useEffect(() => {
     if (mobileMenuOpen) setHideTopSection(false);
   }, [mobileMenuOpen]);
@@ -105,9 +103,9 @@ export default function Navbar() {
         if (currentY < ALWAYS_VISIBLE_THRESHOLD) {
           setHideTopSection(false);
         } else if (currentY > lastScrollY.current + DIRECTION_DEADZONE) {
-          setHideTopSection(true); // scrolling down
+          setHideTopSection(true);
         } else if (currentY < lastScrollY.current - DIRECTION_DEADZONE) {
-          setHideTopSection(false); // scrolling up
+          setHideTopSection(false);
         }
 
         lastScrollY.current = currentY;
@@ -119,19 +117,19 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+    navigate("/");
+  };
+
   return (
     <>
     <header className="fixed inset-x-0 top-0 z-50 w-full">
-      {/* Sliding wrapper — transform only (no layout/reflow properties),
-          so the browser animates this purely on the compositor. This is
-          what fixes the scroll glitching: max-height/height animations
-          force a layout recalculation on every frame, which can nudge
-          scroll position and create a feedback loop with the scroll
-          listener below. Transform never touches layout. */}
       <div
-        style={{ transform: `translateY(${hideTopSection ? -headerTopHeight : 0}px)` }}
-        className="transition-transform duration-300 ease-in-out will-change-transform"
-      >
+  style={{ transform: `translateY(${hideTopSection ? -headerTopHeight : 0}px)` }}
+  className="transition-transform duration-300 ease-in-out will-change-transform shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+>
         <div ref={headerTopRef}>
           {showAnnouncement && (
             <div className="w-full bg-brand-blue text-white">
@@ -153,13 +151,13 @@ export default function Navbar() {
             </div>
           )}
 
-          <nav className="w-full border-b border-gray-100 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.06)]">
+          <nav className="w-full border-b border-gray-100 bg-white">
             <PageContainer>
               <div className="flex items-center justify-between gap-4 py-2 sm:py-2.5">
                 <div className="flex flex-shrink-0 items-center gap-6">
                   <Logo size="lg" />
-
-                  <a
+                <a
+                  
                     href="/about"
                     className="hidden text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue lg:block"
                   >
@@ -190,45 +188,34 @@ export default function Navbar() {
                   </div>
                 </div>
 
-                {/* Desktop search — lg+ only; below lg the search row
-                    further down takes over. */}
                 <div className="hidden flex-1 justify-center lg:flex">
                   <SearchBar className="max-w-md" />
                 </div>
 
                 <div className="flex flex-shrink-0 items-center gap-3 sm:gap-5">
-                  {SHOW_DEV_TOGGLE && (
-                    <Switch
-                      isSelected={isSignedIn}
-                      onChange={setIsSignedIn}
-                      aria-label="Toggle signed in state (dev only)"
-                    >
-                      <Switch.Content>
-                        <Switch.Control>
-                          <Switch.Thumb />
-                        </Switch.Control>
-                      </Switch.Content>
-                    </Switch>
-                  )}
-
                   <div className="hidden lg:block">
-                    {isSignedIn ? <AccountDropdown /> : <AuthButtons />}
+                    {isSignedIn && user ? (
+                      <AccountDropdown user={user} onLogout={handleLogout} />
+                    ) : (
+                      <AuthButtons />
+                    )}
                   </div>
 
                   <Link
-  to="/cart"
-  className="relative hidden items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue sm:flex"
->
-  <span className="relative">
-    <ShoppingCart className="h-5 w-5 text-brand-blue" />
-    {cartCount > 0 && (
-      <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-semibold text-white">
-        {cartCount > 99 ? "99+" : cartCount}
-      </span>
-    )}
-  </span>
-  <span className="hidden md:inline">Cart</span>
-</Link>
+                    to="/cart"
+                    className="relative hidden items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue sm:flex"
+                  >
+                    <span className="relative">
+                      <ShoppingCart className="h-5 w-5 text-brand-blue" />
+                      {cartCount > 0 && (
+                        <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-semibold text-white">
+                          {cartCount > 99 ? "99+" : cartCount}
+                        </span>
+                      )}
+                    </span>
+                    <span className="hidden md:inline">Cart</span>
+                  </Link>
+
                   <div className="hidden lg:block">
                     <HelpDropdown />
                   </div>
@@ -246,11 +233,6 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Search row — part of the same sliding wrapper, positioned
-            right below the top section. Sliding the wrapper up by
-            headerTopHeight lands this row exactly at y=0. lg:hidden means
-            it contributes 0 height on large screens, so the same
-            translate distance fully hides the header there instead. */}
         <div ref={searchRowRef} className="border-t border-gray-100 bg-white py-2 lg:hidden">
           <PageContainer>
             <SearchBar inputName="mobile-search" />
@@ -258,18 +240,8 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu drawer                                               */}
-      {/* Pinned as a fixed overlay starting exactly below the measured    */}
-      {/* header-top height, down to the real bottom of the viewport, with */}
-      {/* its own independent scroll — overscroll-contain stops the drag   */}
-      {/* from "chaining" into scrolling the page behind it once you hit   */}
-      {/* the end of the list.                                             */}
       {/* Order: About Us -> Categories -> Help -> (My Account/Settings    */}
       {/* if signed in) -> Cart -> Login/Sign Up OR Log Out (always last)  */}
-      {/* Deliberately a direct child of <header>, NOT the sliding wrapper */}
-      {/* above — that wrapper has a transform applied, and a transformed  */}
-      {/* ancestor changes what a `fixed` descendant positions relative to */}
-      {/* (the transformed box, not the viewport), which would break this. */}
       {mobileMenuOpen && (
         <div
           style={{ top: headerTopHeight }}
@@ -309,7 +281,16 @@ export default function Navbar() {
             {isSignedIn && (
               <>
                 <MobileSection title="My Account">
-                  {["Orders", "Wishlist", "Browsing History", "Coupons & Offers", "Inbox", "Rating & Reviews", "Credit Balance"].map(
+                  {/* Orders wired to the real page; the rest are
+                      placeholders until those pages exist. */}
+                  <Link
+                    to="/account/orders"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    Orders
+                  </Link>
+                  {["Wishlist", "Browsing History", "Coupons & Offers", "Inbox", "Rating & Reviews", "Credit Balance"].map(
                     (item) => (
                       <a key={item} href="#" className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50">
                         {item}
@@ -328,72 +309,80 @@ export default function Navbar() {
               </>
             )}
 
-           <Link
-  to="/cart"
-  className="mt-2 flex items-center justify-between rounded-md border-t border-gray-100 px-2 pb-2.5 pt-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
->
-  <span className="flex items-center gap-2">
-    <ShoppingCart className="h-4 w-4" />
-    Cart
-  </span>
-  {cartCount > 0 && (
-    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold text-white">
-      {cartCount > 99 ? "99+" : cartCount}
-    </span>
-  )}
-</Link>
+            <Link
+              to="/cart"
+              className="mt-2 flex items-center justify-between rounded-md border-t border-gray-100 px-2 pb-2.5 pt-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <span className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Cart
+              </span>
+              {cartCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold text-white">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </Link>
 
             {isSignedIn ? (
-              <a href="#" className="block rounded-md px-2 py-2.5 text-sm font-medium text-brand-red hover:bg-red-50">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="block rounded-md px-2 py-2.5 text-left text-sm font-medium text-brand-red hover:bg-red-50"
+              >
                 Log Out
-              </a>
+              </button>
             ) : (
               <div className="flex flex-col gap-2 px-2 pt-1">
-  <Link to="/login">
-    <Button className="!w-full !bg-brand-blue !text-white">Login</Button>
-  </Link>
-  <Link to="/signup">
-    <Button variant="secondary" className="!w-full !border !border-brand-blue !bg-white !text-brand-blue">
-      Sign Up
-    </Button>
-  </Link>
-</div>
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="!w-full !bg-brand-blue !text-white">Login</Button>
+                </Link>
+                <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="secondary" className="!w-full !border !border-brand-blue !bg-white !text-brand-blue">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
           </PageContainer>
         </div>
       )}
     </header>
 
-    {/* Static spacer — sized once (via ResizeObserver/layout effect above),
-        NOT animated per scroll frame. Since the header is now `fixed` and
-        purely viewport-relative, this only needs to reserve enough room
-        so page content doesn't start underneath the header at rest
-        (scrollY 0, fully visible). It intentionally does NOT shrink when
-        hideTopSection is true — that's fine, because by the time the
-        header is hidden you've already scrolled past this point anyway. */}
     <div style={{ height: headerTopHeight + searchRowHeight }} />
     </>
   );
 }
 
-function AccountDropdown() {
+function AccountDropdown({
+  user,
+  onLogout,
+}: {
+  user: { firstName: string; lastName: string; email: string };
+  onLogout: () => void;
+}) {
   return (
     <Dropdown>
       <Dropdown.Trigger className="flex items-center gap-1.5 rounded-md px-1 text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue">
         <User className="h-4 w-4 text-brand-blue" />
-        <span>Hello, Oluwaferanmi</span>
+        <span>Hello, {user.firstName}</span>
         <ChevronDown className="h-4 w-4" />
       </Dropdown.Trigger>
 
       <Dropdown.Popover className="min-w-[240px] bg-white text-black shadow-lg">
         <div className="flex items-center gap-2 border-b border-gray-100 px-3 pb-3 pt-3">
           <Avatar size="sm">
-            <Avatar.Image alt="Oluwaferanmi" src="/avatar-placeholder.png" />
-            <Avatar.Fallback delayMs={600}>OA</Avatar.Fallback>
+            <Avatar.Image alt={`${user.firstName} ${user.lastName}`} src="/avatar-placeholder.png" />
+            <Avatar.Fallback delayMs={600}>
+              {user.firstName[0]}
+              {user.lastName[0]}
+            </Avatar.Fallback>
           </Avatar>
           <div className="flex flex-col gap-0">
-            <p className="text-sm font-medium leading-5 text-black">Oluwaferanmi Ojebuyi</p>
-            <p className="text-xs leading-none text-gray-500">ojebuyioluwaferanmi9@email.com</p>
+            <p className="text-sm font-medium leading-5 text-black">
+              {user.firstName} {user.lastName}
+            </p>
+            <p className="text-xs leading-none text-gray-500">{user.email}</p>
           </div>
         </div>
 
@@ -405,8 +394,13 @@ function AccountDropdown() {
             </Dropdown.Item>
             <Dropdown.Popover className="bg-white text-black shadow-lg">
               <Dropdown.Menu>
+                {/* Orders wired to the real page; the rest are placeholders
+                    until those pages exist — wire them the same way once
+                    each one is built. */}
                 <Dropdown.Item id="orders" textValue="Orders">
-                  <Label className="text-black">Orders</Label>
+                  <Link to="/account/orders" className="block w-full">
+                    <Label className="text-black">Orders</Label>
+                  </Link>
                 </Dropdown.Item>
                 <Dropdown.Item id="wishlist" textValue="Wishlist">
                   <Label className="text-black">Wishlist</Label>
@@ -446,7 +440,7 @@ function AccountDropdown() {
                 <Dropdown.Item id="notifications" textValue="Notifications">
                   <Label className="text-black">Notifications</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="logout" textValue="Log Out" variant="danger">
+                <Dropdown.Item id="logout" textValue="Log Out" variant="danger" onAction={onLogout}>
                   <Label className="text-brand-red">Log Out</Label>
                 </Dropdown.Item>
               </Dropdown.Menu>
@@ -497,7 +491,7 @@ function HelpDropdown() {
             </a>
           </Dropdown.Item>
           <Dropdown.Item id="whatsapp" textValue="Chat on WhatsApp">
-            <a
+           <a 
               href="https://wa.me/234XXXXXXXXXX"
               target="_blank"
               rel="noreferrer"

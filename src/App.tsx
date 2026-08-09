@@ -8,6 +8,10 @@ import { CartProvider } from "./components/users/CartPage/CartContext";
 import Login from "./pages/users/Login";
 import Signup from "./pages/users/Signup";
 import ForgotPassword from "./pages/users/ForgotPassword";
+import AccountLayout from "./components/users/MyOrders/AccountLayout";
+import MyOrders from "./pages/users/MyOrders";
+import OrderDetail from "./pages/users/OrderDetail";
+import { AuthProvider } from "./components/users/Auth/AuthContext";
 
 // Routes where the scroll-to-top/cart FAB shouldn't appear.
 const HIDDEN_FAB_ROUTES = ["/login", "/signup", "/forgot-password"];
@@ -17,6 +21,7 @@ function App() {
   const hideFab = HIDDEN_FAB_ROUTES.includes(location.pathname);
 
   return (
+    <AuthProvider>
     <CartProvider>
       <ScrollToTop />
       <Routes>
@@ -26,10 +31,19 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        <Route path="/account" element={<AccountLayout />}>
+          <Route path="orders" element={<MyOrders />} />
+          <Route path="orders/:orderId" element={<OrderDetail />} />
+          {/* wishlist, browsing-history, coupons, inbox, reviews,
+              credit-balance, address-book, settings, notifications
+              land here as we build each one */}
+        </Route>
       </Routes>
 
       {!hideFab && <ScrollFab />}
     </CartProvider>
+    </AuthProvider>
   )
 }
 
