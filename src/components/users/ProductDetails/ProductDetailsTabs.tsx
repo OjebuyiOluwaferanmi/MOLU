@@ -1,6 +1,7 @@
 import { Tabs } from "@heroui/react";
 import { SlidersHorizontal, ChevronDown, User as UserIcon } from "lucide-react";
 import type { MockProduct } from "../../../data/mockSearchItems";
+import { getSubmittedReviewsForProduct } from "../../../data/Reviews";
 import { StarRating } from "./icons";
 import { ImageCarousel } from "./ImageCarousel";
 
@@ -9,8 +10,29 @@ interface ProductDetailsTabsProps {
   onOpenPreview: (img: string) => void;
 }
 
+function formatReviewDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-NG", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 /** The "Product Details" / "Rating & Reviews" tab switcher, and both panels. */
 export function ProductDetailsTabs({ product, onOpenPreview }: ProductDetailsTabsProps) {
+  // Reviews submitted through /account/reviews for THIS product, shown
+  // first (most relevant to the current user) ahead of the seeded ones.
+  const userReviews = getSubmittedReviewsForProduct(product.id).map((r) => ({
+    id: r.id,
+    reviewerName: "You",
+    rating: r.rating,
+    comment: r.comment,
+    date: formatReviewDate(r.reviewedAt),
+  }));
+
+  const allReviews = [...userReviews, ...(product.reviews ?? [])];
+  const totalReviewCount = (product.reviewCount ?? 0) + userReviews.length;
+
   return (
     <section className="w-full">
       <Tabs className="w-full" defaultSelectedKey="details">
@@ -105,7 +127,7 @@ export function ProductDetailsTabs({ product, onOpenPreview }: ProductDetailsTab
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-gray-900">
-                    All Reviews ({product.reviewCount ?? 0})
+                    All Reviews ({totalReviewCount})
                   </h3>
                   <StarRating rating={product.rating} />
                   <span className="text-sm text-gray-500">{product.rating}/5</span>
@@ -132,7 +154,7 @@ export function ProductDetailsTabs({ product, onOpenPreview }: ProductDetailsTab
             </div>
 
             <div className="flex flex-col gap-3">
-              {product.reviews?.map((review) => (
+              {allReviews.map((review) => (
                 <div key={review.id} className="rounded-2xl bg-gray-50 p-4">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">

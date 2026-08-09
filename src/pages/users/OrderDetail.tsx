@@ -143,12 +143,9 @@ export default function OrderDetail() {
                 <p className="text-sm font-semibold text-[#3654D6]">
                   ₦{(priceAtPurchase * quantity).toLocaleString()}
                 </p>
-                {order.status === "delivered" && (
-                  // TODO: once the Rating & Reviews page exists, deep-link
-                  // this to a pre-filled review form for this specific
-                  // product/order-item instead of the general reviews page.
+               {order.status === "delivered" && (
                   <Link
-                    to="/account/reviews"
+                    to={`/account/reviews?productId=${product.id}&orderId=${order.id}`}
                     className="mt-1 inline-block text-xs font-medium text-brand-blue hover:underline"
                   >
                     Leave a Review

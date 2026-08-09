@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "molu_recently_viewed";
-const MAX_RECENT = 10;
+const MAX_RECENT = 50; // raised from 10 — that cap was sized for the homepage row, not a full history page
 
 /**
  * useRecentlyViewed
  * -----------------------------------------------------------------------
  * Mirrors useRecentSearches — localStorage-backed, most recent first,
  * capped at MAX_RECENT. Call addViewedProduct(id) from ProductDetails on
- * mount; read viewedIds from the RecentlyViewed section to render them.
+ * mount; read viewedIds from the RecentlyViewed section / Browsing
+ * History page to render them.
  */
 export function useRecentlyViewed() {
   const [viewedIds, setViewedIds] = useState<string[]>([]);
@@ -41,5 +42,11 @@ export function useRecentlyViewed() {
     });
   }, []);
 
-  return { viewedIds, addViewedProduct };
+  const removeViewedProduct = useCallback((productId: string) => {
+    setViewedIds((prev) => prev.filter((id) => id !== productId));
+  }, []);
+
+  const clearHistory = useCallback(() => setViewedIds([]), []);
+
+  return { viewedIds, addViewedProduct, removeViewedProduct, clearHistory };
 }

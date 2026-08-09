@@ -30,6 +30,26 @@ const CATEGORIES = [
   { id: "groceries", label: "Groceries" },
 ];
 
+// Every "My Account" submenu item's route. Unbuilt pages 404 for now —
+// that's expected until each one exists.
+const ACCOUNT_ROUTES: Record<string, string> = {
+  orders: "/account/orders",
+  wishlist: "/account/wishlist",
+  "browsing-history": "/account/browsing-history",
+  coupons: "/account/coupons",
+  inbox: "/account/inbox",
+  reviews: "/account/reviews",
+  "credit-balance": "/account/credit-balance",
+};
+
+// Every "My Settings" submenu item's route — "logout" is handled specially,
+// not as a navigation.
+const SETTINGS_ROUTES: Record<string, string> = {
+  "address-book": "/account/address-book",
+  "account-management": "/account/settings",
+  notifications: "/account/notifications",
+};
+
 // Scroll amounts below this are ignored entirely — always fully visible
 // near the top of the page, no matter which direction you nudge it.
 const ALWAYS_VISIBLE_THRESHOLD = 10;
@@ -65,10 +85,9 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", updateHeights);
   }, [showAnnouncement, mobileMenuOpen, isLargeScreen]);
 
-  // Publish the navbar's total rendered height as a CSS variable so other
-  // components (e.g. AccountSidebar) can position themselves correctly
-  // below it without prop-drilling — stays accurate even as the
-  // announcement bar is dismissed, the mobile search row appears, etc.
+  // Publish the navbar's real rendered height as a CSS variable so other
+  // fixed-position UI (e.g. AccountSidebar's sticky offset) can align
+  // below it without duplicating this measurement logic.
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--navbar-offset",
@@ -126,7 +145,7 @@ export default function Navbar() {
   return (
     <>
     <header className="fixed inset-x-0 top-0 z-50 w-full">
-      <div
+     <div
   style={{ transform: `translateY(${hideTopSection ? -headerTopHeight : 0}px)` }}
   className="transition-transform duration-300 ease-in-out will-change-transform shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
 >
@@ -136,7 +155,7 @@ export default function Navbar() {
               <div className="relative flex items-center justify-center px-10 py-2 sm:px-12">
                 <p className="text-center text-[11px] leading-tight sm:text-sm">
                   Never miss a deal. Sign up for exclusive promos.{" "}
-                  <a href="/signup" className="font-semibold underline underline-offset-2">
+                  <a href="/signup" className="cursor-pointer font-semibold underline underline-offset-2">
                     Sign up Now
                   </a>
                 </p>
@@ -144,22 +163,22 @@ export default function Navbar() {
                   <CloseButton
                     aria-label="Dismiss announcement"
                     onPress={() => setShowAnnouncement(false)}
-                    className="!size-5 !rounded-none !border-none !bg-transparent !p-0 !shadow-none !text-white hover:!bg-transparent hover:!opacity-70 [&_svg]:!text-white [&_svg]:!stroke-white"
+                    className="!size-5 !cursor-pointer !rounded-none !border-none !bg-transparent !p-0 !shadow-none !text-white hover:!bg-transparent hover:!opacity-70 [&_svg]:!text-white [&_svg]:!stroke-white"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          <nav className="w-full border-b border-gray-100 bg-white">
+          <nav className="w-full border-b border-gray-100 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.06)]">
             <PageContainer>
               <div className="flex items-center justify-between gap-4 py-2 sm:py-2.5">
                 <div className="flex flex-shrink-0 items-center gap-6">
                   <Logo size="lg" />
-                <a
-                  
+
+                  <a
                     href="/about"
-                    className="hidden text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue lg:block"
+                    className="hidden cursor-pointer text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue lg:block"
                   >
                     About Us
                   </a>
@@ -168,7 +187,7 @@ export default function Navbar() {
                     <Dropdown>
                       <Button
                         variant="secondary"
-                        className="flex items-center gap-1 !bg-transparent !text-sm !font-medium !text-gray-700 !shadow-none hover:!text-brand-blue"
+                        className="flex cursor-pointer items-center gap-1 !bg-transparent !text-sm !font-medium !text-gray-700 !shadow-none hover:!text-brand-blue"
                       >
                         Categories
                         <ChevronDown className="h-4 w-4" />
@@ -178,7 +197,12 @@ export default function Navbar() {
                           onAction={(key) => console.log(`Category selected: ${key}`)}
                         >
                           {CATEGORIES.map((cat) => (
-                            <Dropdown.Item key={cat.id} id={cat.id} textValue={cat.label}>
+                            <Dropdown.Item
+                              key={cat.id}
+                              id={cat.id}
+                              textValue={cat.label}
+                              className="cursor-pointer"
+                            >
                               <Label className="text-black">{cat.label}</Label>
                             </Dropdown.Item>
                           ))}
@@ -203,7 +227,7 @@ export default function Navbar() {
 
                   <Link
                     to="/cart"
-                    className="relative hidden items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue sm:flex"
+                    className="relative hidden cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue sm:flex"
                   >
                     <span className="relative">
                       <ShoppingCart className="h-5 w-5 text-brand-blue" />
@@ -221,9 +245,10 @@ export default function Navbar() {
                   </div>
 
                   <button
+                    type="button"
                     aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                     onClick={() => setMobileMenuOpen((open) => !open)}
-                    className="rounded-md p-1 text-gray-700 hover:bg-gray-100 lg:hidden"
+                    className="cursor-pointer rounded-md p-1 text-gray-700 hover:bg-gray-100 lg:hidden"
                   >
                     {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                   </button>
@@ -248,16 +273,19 @@ export default function Navbar() {
           className="fixed inset-x-0 bottom-0 overflow-y-auto overscroll-contain border-t border-gray-100 bg-white shadow-md lg:hidden"
         >
           <PageContainer className="flex flex-col gap-1 py-4">
-            <a href="/about" className="rounded-md px-2 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+           <a 
+              href="/about"
+              className="cursor-pointer rounded-md px-2 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
               About Us
             </a>
 
             <MobileSection title="Categories">
               {CATEGORIES.map((cat) => (
-                <a
+               <a 
                   key={cat.id}
                   href={`/category/${cat.id}`}
-                  className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  className="block cursor-pointer rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
                 >
                   {cat.label}
                 </a>
@@ -265,14 +293,17 @@ export default function Navbar() {
             </MobileSection>
 
             <MobileSection title="Help">
-              <a href="/faq" className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50">
+             <a 
+                href="/faq"
+                className="block cursor-pointer rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+              >
                 FAQ
               </a>
               <a
                 href="https://wa.me/234XXXXXXXXXX"
                 target="_blank"
                 rel="noreferrer"
-                className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                className="block cursor-pointer rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
               >
                 Chat on WhatsApp
               </a>
@@ -281,27 +312,50 @@ export default function Navbar() {
             {isSignedIn && (
               <>
                 <MobileSection title="My Account">
-                  {/* Orders wired to the real page; the rest are
-                      placeholders until those pages exist. */}
                   <Link
                     to="/account/orders"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                    className="block cursor-pointer rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
                   >
                     Orders
                   </Link>
-                  {["Wishlist", "Browsing History", "Coupons & Offers", "Inbox", "Rating & Reviews", "Credit Balance"].map(
-                    (item) => (
-                      <a key={item} href="#" className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                        {item}
-                      </a>
-                    )
-                  )}
+                  <Link
+                    to="/account/coupons"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    Coupons & Offers
+                  </Link>
+                  <Link
+                    to="/account/inbox"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    Inbox
+                  </Link>
+                  <Link
+                    to="/account/reviews"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    Rating & Reviews
+                  </Link>
+                  <Link
+                    to="/account/credit-balance"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    Credit Balance
+                  </Link>
                 </MobileSection>
 
                 <MobileSection title="My Settings">
                   {["Address Book", "Account Management", "Notifications"].map((item) => (
-                    <a key={item} href="#" className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                   <a 
+                      key={item}
+                      href="#"
+                      className="block cursor-pointer rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                    >
                       {item}
                     </a>
                   ))}
@@ -311,7 +365,7 @@ export default function Navbar() {
 
             <Link
               to="/cart"
-              className="mt-2 flex items-center justify-between rounded-md border-t border-gray-100 px-2 pb-2.5 pt-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="mt-2 flex cursor-pointer items-center justify-between rounded-md border-t border-gray-100 px-2 pb-2.5 pt-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               <span className="flex items-center gap-2">
                 <ShoppingCart className="h-4 w-4" />
@@ -328,17 +382,20 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="block rounded-md px-2 py-2.5 text-left text-sm font-medium text-brand-red hover:bg-red-50"
+                className="block cursor-pointer rounded-md px-2 py-2.5 text-left text-sm font-medium text-brand-red hover:bg-red-50"
               >
                 Log Out
               </button>
             ) : (
               <div className="flex flex-col gap-2 px-2 pt-1">
                 <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="!w-full !bg-brand-blue !text-white">Login</Button>
+                  <Button className="!w-full !cursor-pointer !bg-brand-blue !text-white">Login</Button>
                 </Link>
                 <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="secondary" className="!w-full !border !border-brand-blue !bg-white !text-brand-blue">
+                  <Button
+                    variant="secondary"
+                    className="!w-full !cursor-pointer !border !border-brand-blue !bg-white !text-brand-blue"
+                  >
                     Sign Up
                   </Button>
                 </Link>
@@ -361,9 +418,11 @@ function AccountDropdown({
   user: { firstName: string; lastName: string; email: string };
   onLogout: () => void;
 }) {
+  const navigate = useNavigate();
+
   return (
     <Dropdown>
-      <Dropdown.Trigger className="flex items-center gap-1.5 rounded-md px-1 text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue">
+      <Dropdown.Trigger className="flex cursor-pointer items-center gap-1.5 rounded-md px-1 text-sm font-medium text-gray-700 transition-colors hover:text-brand-blue">
         <User className="h-4 w-4 text-brand-blue" />
         <span>Hello, {user.firstName}</span>
         <ChevronDown className="h-4 w-4" />
@@ -388,36 +447,42 @@ function AccountDropdown({
 
         <Dropdown.Menu>
           <Dropdown.SubmenuTrigger>
-            <Dropdown.Item id="my-account" textValue="My Account">
+            <Dropdown.Item id="my-account" textValue="My Account" className="cursor-pointer">
               <Label className="text-black">My Account</Label>
               <Dropdown.SubmenuIndicator />
             </Dropdown.Item>
             <Dropdown.Popover className="bg-white text-black shadow-lg">
-              <Dropdown.Menu>
-                {/* Orders wired to the real page; the rest are placeholders
-                    until those pages exist — wire them the same way once
-                    each one is built. */}
-                <Dropdown.Item id="orders" textValue="Orders">
-                  <Link to="/account/orders" className="block w-full">
-                    <Label className="text-black">Orders</Label>
-                  </Link>
+              {/*
+                Navigation lives on the Menu's onAction, NOT on individual
+                items — nesting a real <Link> inside a Dropdown.Item causes
+                a "click twice to navigate" bug, because the item's own
+                press handling consumes the first click. onAction fires
+                cleanly on a single interaction instead.
+              */}
+              <Dropdown.Menu onAction={(key) => navigate(ACCOUNT_ROUTES[String(key)] ?? "#")}>
+                <Dropdown.Item id="orders" textValue="Orders" className="cursor-pointer">
+                  <Label className="text-black">Orders</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="wishlist" textValue="Wishlist">
+                <Dropdown.Item id="wishlist" textValue="Wishlist" className="cursor-pointer">
                   <Label className="text-black">Wishlist</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="browsing-history" textValue="Browsing History">
+                <Dropdown.Item id="browsing-history" textValue="Browsing History" className="cursor-pointer">
                   <Label className="text-black">Browsing History</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="coupons" textValue="Coupons & Offers">
-                  <Label className="text-black">Coupons & Offers</Label>
-                </Dropdown.Item>
+              <Dropdown.Item id="coupons" textValue="Coupons & Offers">
+  <Link to="/account/coupons" className="block w-full">
+    <Label className="text-black">Coupons & Offers</Label>
+  </Link>
+</Dropdown.Item>
                 <Dropdown.Item id="inbox" textValue="Inbox">
-                  <Label className="text-black">Inbox</Label>
-                </Dropdown.Item>
-                <Dropdown.Item id="reviews" textValue="Rating & Reviews">
+  <Link to="/account/inbox" className="block w-full">
+    <Label className="text-black">Inbox</Label>
+  </Link>
+</Dropdown.Item>
+                <Dropdown.Item id="reviews" textValue="Rating & Reviews" className="cursor-pointer">
                   <Label className="text-black">Rating & Reviews</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="credit-balance" textValue="Credit Balance">
+                <Dropdown.Item id="credit-balance" textValue="Credit Balance" className="cursor-pointer">
                   <Label className="text-black">Credit Balance</Label>
                 </Dropdown.Item>
               </Dropdown.Menu>
@@ -425,22 +490,31 @@ function AccountDropdown({
           </Dropdown.SubmenuTrigger>
 
           <Dropdown.SubmenuTrigger>
-            <Dropdown.Item id="my-settings" textValue="My Settings">
+            <Dropdown.Item id="my-settings" textValue="My Settings" className="cursor-pointer">
               <Label className="text-black">My Settings</Label>
               <Dropdown.SubmenuIndicator />
             </Dropdown.Item>
             <Dropdown.Popover className="bg-white text-black shadow-lg">
-              <Dropdown.Menu>
-                <Dropdown.Item id="address-book" textValue="Address Book">
+              <Dropdown.Menu
+                onAction={(key) => {
+                  const k = String(key);
+                  if (k === "logout") {
+                    onLogout();
+                    return;
+                  }
+                  navigate(SETTINGS_ROUTES[k] ?? "#");
+                }}
+              >
+                <Dropdown.Item id="address-book" textValue="Address Book" className="cursor-pointer">
                   <Label className="text-black">Address Book</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="account-management" textValue="Account Management">
+                <Dropdown.Item id="account-management" textValue="Account Management" className="cursor-pointer">
                   <Label className="text-black">Account Management</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="notifications" textValue="Notifications">
+                <Dropdown.Item id="notifications" textValue="Notifications" className="cursor-pointer">
                   <Label className="text-black">Notifications</Label>
                 </Dropdown.Item>
-                <Dropdown.Item id="logout" textValue="Log Out" variant="danger" onAction={onLogout}>
+                <Dropdown.Item id="logout" textValue="Log Out" variant="danger" className="cursor-pointer">
                   <Label className="text-brand-red">Log Out</Label>
                 </Dropdown.Item>
               </Dropdown.Menu>
@@ -458,13 +532,13 @@ function AuthButtons() {
       <Link to="/login">
         <Button
           variant="secondary"
-          className="!border !border-gray-200 !bg-white !text-sm !font-medium !text-gray-700 hover:!border-brand-blue hover:!text-brand-blue"
+          className="!cursor-pointer !border !border-gray-200 !bg-white !text-sm !font-medium !text-gray-700 hover:!border-brand-blue hover:!text-brand-blue"
         >
           Login
         </Button>
       </Link>
       <Link to="/signup">
-        <Button className="!bg-brand-blue !text-sm !font-medium !text-white hover:!bg-brand-blue/90">
+        <Button className="!cursor-pointer !bg-brand-blue !text-sm !font-medium !text-white hover:!bg-brand-blue/90">
           Sign Up
         </Button>
       </Link>
@@ -473,32 +547,35 @@ function AuthButtons() {
 }
 
 function HelpDropdown() {
+  const navigate = useNavigate();
+
   return (
     <Dropdown>
       <Button
         variant="secondary"
-        className="flex items-center gap-1 !bg-transparent !text-sm !font-medium !text-gray-700 !shadow-none hover:!text-brand-blue"
+        className="flex cursor-pointer items-center gap-1 !bg-transparent !text-sm !font-medium !text-gray-700 !shadow-none hover:!text-brand-blue"
       >
         <CircleHelp className="h-4 w-4 text-brand-blue" />
         Help
         <ChevronDown className="h-4 w-4" />
       </Button>
       <Dropdown.Popover className="min-w-[180px] bg-white text-black shadow-lg">
-        <Dropdown.Menu>
-          <Dropdown.Item id="faq" textValue="FAQ">
-            <a href="/faq" className="block w-full">
-              <Label className="text-black">FAQ</Label>
-            </a>
+        {/* Same fix as the account dropdown — onAction instead of nested
+            anchors, so a single click actually navigates/opens WhatsApp. */}
+        <Dropdown.Menu
+          onAction={(key) => {
+            if (key === "whatsapp") {
+              window.open("https://wa.me/234XXXXXXXXXX", "_blank", "noopener,noreferrer");
+            } else if (key === "faq") {
+              navigate("/faq");
+            }
+          }}
+        >
+          <Dropdown.Item id="faq" textValue="FAQ" className="cursor-pointer">
+            <Label className="text-black">FAQ</Label>
           </Dropdown.Item>
-          <Dropdown.Item id="whatsapp" textValue="Chat on WhatsApp">
-           <a 
-              href="https://wa.me/234XXXXXXXXXX"
-              target="_blank"
-              rel="noreferrer"
-              className="block w-full"
-            >
-              <Label className="text-black">Chat on WhatsApp</Label>
-            </a>
+          <Dropdown.Item id="whatsapp" textValue="Chat on WhatsApp" className="cursor-pointer">
+            <Label className="text-black">Chat on WhatsApp</Label>
           </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown.Popover>

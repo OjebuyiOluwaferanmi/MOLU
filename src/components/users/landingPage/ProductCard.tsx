@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Link } from "react-router";
+import { useWishlist } from "../Wishlist/WishlistContext";
 
 export interface Product {
   id: string;
@@ -61,7 +61,8 @@ function HeartIcon({ filled }: { filled: boolean }) {
 }
 
 export function ProductCard({ product }: { product: Product }) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const wishlisted = isWishlisted(product.id);
 
   return (
     <Link
@@ -81,17 +82,15 @@ export function ProductCard({ product }: { product: Product }) {
         <button
           type="button"
           onClick={(e) => {
-            // Stop the click from bubbling up to the Link — otherwise
-            // toggling the wishlist would also navigate to the product page.
             e.preventDefault();
             e.stopPropagation();
-            setIsWishlisted((prev) => !prev);
+            toggleWishlist(product.id);
           }}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          aria-pressed={isWishlisted}
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={wishlisted}
           className="cursor-pointer p-1 rounded-full hover:bg-blue-50 transition-colors"
         >
-          <HeartIcon filled={isWishlisted} />
+          <HeartIcon filled={wishlisted} />
         </button>
       </div>
 

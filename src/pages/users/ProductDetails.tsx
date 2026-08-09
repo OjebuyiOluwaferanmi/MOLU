@@ -25,7 +25,6 @@ export default function ProductDetails() {
 
   const [activeImage, setActiveImage] = useState(product?.images[0]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(product?.colors?.[0]?.name);
   const [selectedMemory, setSelectedMemory] = useState(product?.memoryOptions?.[0]);
@@ -81,47 +80,45 @@ export default function ProductDetails() {
     <div className="bg-[#F1F1F1] min-h-screen">
       <Navbar />
       <PageContainer>
-  <Fade triggerOnce direction="up" duration={600}>
-    <div className="flex flex-col gap-4">
-      <ProductBreadcrumbs items={breadcrumbItems} />
+        <Fade triggerOnce direction="up" duration={600}>
+          <div className="flex flex-col gap-4">
+            <ProductBreadcrumbs items={breadcrumbItems} />
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex flex-col gap-6 md:flex-row">
-              <ProductGallery
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+              <div className="flex min-w-0 flex-1 flex-col gap-4">
+                <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+                  <div className="flex flex-col gap-6 md:flex-row">
+                    <ProductGallery
+                      product={product}
+                      activeImage={activeImage}
+                      onSelectImage={setActiveImage}
+                      onOpenPreview={openPreview}
+                    />
+                    <ProductInfo
+                      product={product}
+                      selectedColor={selectedColor}
+                      onSelectColor={setSelectedColor}
+                      selectedMemory={selectedMemory}
+                      onSelectMemory={setSelectedMemory}
+                    />
+                  </div>
+                </section>
+
+                <ProductDetailsTabs product={product} onOpenPreview={openPreview} />
+              </div>
+
+              <ProductCartPanel
                 product={product}
-                activeImage={activeImage}
-                onSelectImage={setActiveImage}
-                onOpenPreview={openPreview}
-              />
-              <ProductInfo
-                product={product}
+                quantity={quantity}
+                onIncrement={() => setQuantity((q) => q + 1)}
+                onDecrement={() => setQuantity((q) => Math.max(1, q - 1))}
                 selectedColor={selectedColor}
-                onSelectColor={setSelectedColor}
                 selectedMemory={selectedMemory}
-                onSelectMemory={setSelectedMemory}
               />
             </div>
-          </section>
-
-          <ProductDetailsTabs product={product} onOpenPreview={openPreview} />
-        </div>
-
-        <ProductCartPanel
-  product={product}
-  quantity={quantity}
-  onIncrement={() => setQuantity((q) => q + 1)}
-  onDecrement={() => setQuantity((q) => Math.max(1, q - 1))}
-  isWishlisted={isWishlisted}
-  onToggleWishlist={() => setIsWishlisted((prev) => !prev)}
-  selectedColor={selectedColor}
-  selectedMemory={selectedMemory}
-/>
-      </div>
-    </div>
-  </Fade>
-</PageContainer>
+          </div>
+        </Fade>
+      </PageContainer>
 
       <Fade triggerOnce direction="up" duration={600} delay={200}>
         <PageContainer>
@@ -136,9 +133,8 @@ export default function ProductDetails() {
       </Fade>
 
       <Fade triggerOnce direction="up" duration={600} delay={200}>
-          <Footer />
+        <Footer />
       </Fade>
-
 
       <ImagePreviewModal
         isOpen={isModalOpen}

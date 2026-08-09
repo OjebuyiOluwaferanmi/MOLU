@@ -54,7 +54,7 @@ function NavRow({
       to={item.path}
       onClick={onNavigate}
       aria-current={isActive ? "page" : undefined}
-      className={`flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium transition-colors ${
+      className={`flex cursor-pointer items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium transition-colors ${
         isActive ? "bg-brand-blue text-white" : "text-gray-700 hover:bg-gray-100"
       }`}
     >
@@ -86,13 +86,13 @@ function SidebarContent({
             type="button"
             onClick={onClose}
             aria-label="Collapse account menu"
-            className="flex items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100"
+            className="flex cursor-pointer items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100"
           >
             <X className="h-5 w-5" />
           </button>
         )}
       </div>
-      <nav className="mt-2 flex flex-col gap-0.5">
+      <nav className="mt-2 flex flex-col gap-1.5">
         {ACCOUNT_ITEMS.map((item) => (
           <NavRow key={item.path} item={item} isActive={isActive(item.path)} onNavigate={onNavigate} />
         ))}
@@ -101,13 +101,13 @@ function SidebarContent({
       <h2 className="mt-6 border-t border-gray-100 px-3 pt-6 text-base font-bold text-gray-900">
         My Settings
       </h2>
-      <nav className="mt-2 flex flex-col gap-0.5">
+      <nav className="mt-2 flex flex-col gap-1.5">
         {SETTINGS_ITEMS.map((item) => (
           <NavRow key={item.path} item={item} isActive={isActive(item.path)} onNavigate={onNavigate} />
         ))}
         <button
           type="button"
-          className="mt-1 flex items-center gap-3 rounded-full px-3 py-2.5 text-left text-sm font-medium text-brand-red hover:bg-red-50"
+          className="mt-1 flex cursor-pointer items-center gap-3 rounded-full px-3 py-2.5 text-left text-sm font-medium text-brand-red hover:bg-red-50"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Log Out
@@ -120,7 +120,12 @@ function SidebarContent({
 export function AccountSidebar() {
   const location = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
-  const isActive = (path: string) => location.pathname === path;
+
+  // Matches the item's own path AND anything nested under it — e.g.
+  // "/account/orders" stays active while viewing "/account/orders/MLU-123".
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
+
   const allItems = [...ACCOUNT_ITEMS, ...SETTINGS_ITEMS];
 
   // Lock page scroll while the mobile overlay is open — only the sidebar
@@ -143,13 +148,13 @@ export function AccountSidebar() {
       </aside>
 
       {/* ---------------- Below lg: icon rail + expandable overlay ---------------- */}
-      <div className="lg:hidden">
+      <div className="self-stretch lg:hidden">
         <aside className="sticky top-[var(--navbar-offset)] flex w-16 shrink-0 flex-col items-center gap-1 rounded-3xl bg-white p-2 shadow-sm">
           <button
             type="button"
             onClick={() => setIsExpanded(true)}
             aria-label="Expand account menu"
-            className="mb-1 flex items-center justify-center rounded-full p-2.5 text-gray-500 hover:bg-gray-100"
+            className="mb-1 flex cursor-pointer items-center justify-center rounded-full p-2.5 text-gray-500 hover:bg-gray-100"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -162,7 +167,7 @@ export function AccountSidebar() {
                 to={item.path}
                 aria-label={item.label}
                 aria-current={isActive(item.path) ? "page" : undefined}
-                className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors ${
                   isActive(item.path) ? "bg-brand-blue text-white" : "text-gray-600 hover:bg-gray-100"
                 }`}
               >

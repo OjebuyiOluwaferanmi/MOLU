@@ -12,6 +12,14 @@ import AccountLayout from "./components/users/MyOrders/AccountLayout";
 import MyOrders from "./pages/users/MyOrders";
 import OrderDetail from "./pages/users/OrderDetail";
 import { AuthProvider } from "./components/users/Auth/AuthContext";
+import { WishlistProvider } from "./components/users/Wishlist/WishlistContext";
+import Wishlist from "./pages/users/Wishlist";
+import BrowsingHistory from "./pages/users/BrowsingHistory";
+import CouponsOffers from "./pages/users/CouponsOffers";
+import Inbox from "./pages/users/Inbox";
+import MessageDetail from "./pages/users/MessageDetail";
+import RatingReviews from "./pages/users/RatingReviews";
+import CreditBalance from "./pages/users/CreditBalance";
 
 // Routes where the scroll-to-top/cart FAB shouldn't appear.
 const HIDDEN_FAB_ROUTES = ["/login", "/signup", "/forgot-password"];
@@ -22,6 +30,7 @@ function App() {
 
   return (
     <AuthProvider>
+    <WishlistProvider>
     <CartProvider>
       <ScrollToTop />
       <Routes>
@@ -35,14 +44,19 @@ function App() {
         <Route path="/account" element={<AccountLayout />}>
           <Route path="orders" element={<MyOrders />} />
           <Route path="orders/:orderId" element={<OrderDetail />} />
-          {/* wishlist, browsing-history, coupons, inbox, reviews,
-              credit-balance, address-book, settings, notifications
-              land here as we build each one */}
+          <Route path="wishlist" element={<Wishlist />} />
+          <Route path="browsing-history" element={<BrowsingHistory />} />
+          <Route path="coupons" element={<CouponsOffers />} />
+          <Route path="inbox" element={<Inbox />} />
+          <Route path="inbox/:messageId" element={<MessageDetail />} />
+          <Route path="reviews" element={<RatingReviews />} />
+          <Route path="credit-balance" element={<CreditBalance />} />
         </Route>
       </Routes>
 
       {!hideFab && <ScrollFab />}
     </CartProvider>
+    </WishlistProvider>
     </AuthProvider>
   )
 }

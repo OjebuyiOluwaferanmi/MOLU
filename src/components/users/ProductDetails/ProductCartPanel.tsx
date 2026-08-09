@@ -2,14 +2,13 @@ import { useState } from "react";
 import { Check, Heart } from "lucide-react";
 import type { MockProduct } from "../../../data/mockSearchItems";
 import { useCart } from "../../users/CartPage/CartContext";
+import { useWishlist } from "../../users/Wishlist/WishlistContext";
 
 interface ProductCartPanelProps {
   product: MockProduct;
   quantity: number;
   onIncrement: () => void;
   onDecrement: () => void;
-  isWishlisted: boolean;
-  onToggleWishlist: () => void;
   selectedColor?: string;
   selectedMemory?: string;
 }
@@ -21,13 +20,14 @@ export function ProductCartPanel({
   quantity,
   onIncrement,
   onDecrement,
-  isWishlisted,
-  onToggleWishlist,
   selectedColor,
   selectedMemory,
 }: ProductCartPanelProps) {
   const { addToCart } = useCart();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const [justAdded, setJustAdded] = useState(false);
+
+  const wishlisted = isWishlisted(product.id);
 
   const handleAddToCart = () => {
     addToCart({ productId: product.id, quantity, selectedColor, selectedMemory });
@@ -85,14 +85,14 @@ export function ProductCartPanel({
 
       <button
         type="button"
-        onClick={onToggleWishlist}
-        aria-pressed={isWishlisted}
+        onClick={() => toggleWishlist(product.id)}
+        aria-pressed={wishlisted}
         className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700 hover:text-[#3654D6]"
       >
         <Heart
           className="h-5 w-5"
           color="#3654D6"
-          fill={isWishlisted ? "#3654D6" : "none"}
+          fill={wishlisted ? "#3654D6" : "none"}
           strokeWidth={1.8}
         />
         Add to wishlist

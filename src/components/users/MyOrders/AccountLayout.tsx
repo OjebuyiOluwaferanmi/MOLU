@@ -2,7 +2,7 @@ import { Outlet } from "react-router";
 import Navbar from "../common/Navbar";
 import {Footer} from "../common/Footer";
 import PageContainer from "../common/PageContainer";
-import { AccountSidebar } from "./AccountSidebar";
+import { AccountSidebar } from "../common/AccountSidebar";
 
 export default function AccountLayout() {
   return (

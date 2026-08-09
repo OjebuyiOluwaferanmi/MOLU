@@ -2,21 +2,15 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import { getProductById } from "../../../data/mockSearchItems";
+import { useWishlist } from "../Wishlist/WishlistContext";
 
 interface DealOfTheDayProps {
-  /** Which product from the catalog to feature. Defaults to id "2"
-   *  (Samsung Galaxy S23 Ultra) — change this to whichever product you
-   *  want spotlighted as today's deal. */
   productId?: string;
 }
 
 function StarIcon({ className = "" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 20 20"
-      className={`h-3.5 w-3.5 ${className}`}
-      fill="currentColor"
-    >
+    <svg viewBox="0 0 20 20" className={`h-3.5 w-3.5 ${className}`} fill="currentColor">
       <path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.8L10 14.9l-5.2 2.62.99-5.8-4.21-4.1 5.82-.85L10 1.5z" />
     </svg>
   );
@@ -26,10 +20,7 @@ function Star({ fillPercent }: { fillPercent: number }) {
   return (
     <span className="relative inline-block h-3.5 w-3.5">
       <StarIcon className="absolute inset-0 text-gray-300" />
-      <span
-        className="absolute inset-0 overflow-hidden"
-        style={{ width: `${fillPercent}%` }}
-      >
+      <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
         <StarIcon className="text-[#3654D6]" />
       </span>
     </span>
@@ -67,13 +58,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
 
 function CloseIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-6 w-6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
     </svg>
   );
@@ -81,15 +66,7 @@ function CloseIcon() {
 
 function getMsUntilMidnight() {
   const now = new Date();
-  const endOfDay = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    23,
-    59,
-    59,
-    999
-  );
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
   return endOfDay.getTime() - now.getTime();
 }
 
@@ -118,18 +95,19 @@ function useCountdownToMidnight() {
 export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
   const product = getProductById(productId);
   const navigate = useNavigate();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const { hours, minutes, seconds } = useCountdownToMidnight();
 
   const [activeImage, setActiveImage] = useState(product?.images[0]);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Keep the gallery in sync if productId ever changes at runtime.
   useEffect(() => {
     setActiveImage(product?.images[0]);
   }, [product]);
 
-  if (!product) return null; // bad productId passed in — fail quietly
+  if (!product) return null;
+
+  const wishlisted = isWishlisted(product.id);
 
   const countdownUnits = [
     { label: "Hours", value: hours },
@@ -146,7 +124,6 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
       </h2>
 
       <div className="flex flex-col items-start gap-6 md:flex-row md:items-stretch md:gap-8">
-        {/* Gallery */}
         <div className="flex w-full flex-col gap-3 md:w-1/2 md:flex-row-reverse md:items-stretch">
           <div
             onClick={() => setIsModalOpen(true)}
@@ -158,11 +135,7 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
             aria-label="Open image preview"
             className="aspect-[4/3] w-full shrink-0 cursor-pointer overflow-hidden rounded-xl bg-gray-50 px-3 sm:px-4 md:aspect-auto md:h-full md:w-auto md:flex-1"
           >
-            <img
-              src={activeImage}
-              alt={product.name}
-              className="h-full w-full object-contain"
-            />
+            <img src={activeImage} alt={product.name} className="h-full w-full object-contain" />
           </div>
           <div className="flex flex-row gap-3 md:flex-col">
             {product.images.map((thumb, index) => (
@@ -172,22 +145,15 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
                 onClick={() => setActiveImage(thumb)}
                 aria-label={`Show product image ${index + 1}`}
                 className={`h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border transition-colors sm:h-16 sm:w-16 ${
-                  activeImage === thumb
-                    ? "border-[#3654D6]"
-                    : "border-gray-200 hover:border-gray-300"
+                  activeImage === thumb ? "border-[#3654D6]" : "border-gray-200 hover:border-gray-300"
                 }`}
               >
-                <img
-                  src={thumb}
-                  alt={`Thumbnail ${index + 1}`}
-                  className="h-full w-full object-cover"
-                />
+                <img src={thumb} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
               </button>
             ))}
           </div>
         </div>
 
-        {/* Details */}
         <div className="flex w-full flex-1 flex-col gap-2 text-left">
           <h3
             onClick={goToProduct}
@@ -203,9 +169,7 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
           <div className="mt-1 flex items-center gap-3">
             <StarRating rating={product.rating} />
             <span className="text-xs text-gray-400">{product.rating}</span>
-            <span className="ml-auto text-xs text-gray-500">
-              {product.soldCount} Sold
-            </span>
+            <span className="ml-auto text-xs text-gray-500">{product.soldCount} Sold</span>
           </div>
 
           <div className="mt-1 flex items-center gap-3">
@@ -222,9 +186,7 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
 
           <div className="mt-2 flex items-center justify-between gap-4">
             <div className="flex flex-col items-start gap-1">
-              <span className="text-xs text-gray-500">
-                Hurry up! Deal will end in
-              </span>
+              <span className="text-xs text-gray-500">Hurry up! Deal will end in</span>
               <div className="flex items-end gap-1">
                 {countdownUnits.map((unit, index) => (
                   <div key={unit.label} className="flex items-end gap-1">
@@ -237,9 +199,7 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
                       </span>
                     </div>
                     {index < countdownUnits.length - 1 && (
-                      <span className="pb-0.5 text-base font-semibold text-gray-900 sm:text-lg">
-                        :
-                      </span>
+                      <span className="pb-0.5 text-base font-semibold text-gray-900 sm:text-lg">:</span>
                     )}
                   </div>
                 ))}
@@ -247,14 +207,12 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
             </div>
             <button
               type="button"
-              onClick={() => setIsWishlisted((prev) => !prev)}
-              aria-label={
-                isWishlisted ? "Remove from wishlist" : "Add to wishlist"
-              }
-              aria-pressed={isWishlisted}
+              onClick={() => toggleWishlist(product.id)}
+              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              aria-pressed={wishlisted}
               className="shrink-0 cursor-pointer p-2 rounded-full hover:bg-blue-50 transition-colors"
             >
-              <HeartIcon filled={isWishlisted} />
+              <HeartIcon filled={wishlisted} />
             </button>
           </div>
 
@@ -287,17 +245,10 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
               className="flex max-h-[70vh] w-full max-w-4xl items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
-                src={activeImage}
-                alt={product.name}
-                className="max-h-[70vh] max-w-full object-contain"
-              />
+              <img src={activeImage} alt={product.name} className="max-h-[70vh] max-w-full object-contain" />
             </div>
 
-            <div
-              className="flex shrink-0 flex-row gap-3"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex shrink-0 flex-row gap-3" onClick={(e) => e.stopPropagation()}>
               {product.images.map((thumb, index) => (
                 <button
                   key={index}
@@ -305,16 +256,10 @@ export function DealOfTheDay({ productId = "2" }: DealOfTheDayProps) {
                   onClick={() => setActiveImage(thumb)}
                   aria-label={`Show product image ${index + 1}`}
                   className={`h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-colors sm:h-16 sm:w-16 ${
-                    activeImage === thumb
-                      ? "border-white"
-                      : "border-white/30 hover:border-white/70"
+                    activeImage === thumb ? "border-white" : "border-white/30 hover:border-white/70"
                   }`}
                 >
-                  <img
-                    src={thumb}
-                    alt={`Thumbnail ${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={thumb} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
