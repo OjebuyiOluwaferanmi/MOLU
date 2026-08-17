@@ -13,6 +13,7 @@ import {
   Bell,
   LogOut,
   Menu,
+  ChevronRight,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -34,8 +35,8 @@ const ACCOUNT_ITEMS: NavItem[] = [
 ];
 
 const SETTINGS_ITEMS: NavItem[] = [
-  { label: "Address Book", path: "/account/address-book", icon: MapPin },
-  { label: "Account Management", path: "/account/settings", icon: UserCog },
+  { label: "Address Book", path: "/account/address", icon: MapPin },
+  { label: "Account Management", path: "/account/profile", icon: UserCog },
   { label: "Notifications", path: "/account/notifications", icon: Bell },
 ];
 
@@ -126,8 +127,6 @@ export function AccountSidebar() {
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
-  const allItems = [...ACCOUNT_ITEMS, ...SETTINGS_ITEMS];
-
   // Lock page scroll while the mobile overlay is open — only the sidebar
   // itself should scroll, not the page behind it.
   useEffect(() => {
@@ -143,39 +142,25 @@ export function AccountSidebar() {
   return (
     <>
       {/* ---------------- Desktop: always-expanded static sidebar ---------------- */}
-      <aside className="sticky top-[var(--navbar-offset)] hidden w-64 shrink-0 flex-col rounded-3xl bg-white p-4 shadow-sm lg:flex">
+      <aside className="sticky top-[var(--navbar-offset)] hidden w-64 shrink-0 flex-col rounded-3xl bg-white p-4 shadow-sm transition-[top] duration-300 ease-in-out lg:flex">
         <SidebarContent isActive={isActive} />
       </aside>
 
-      {/* ---------------- Below lg: icon rail + expandable overlay ---------------- */}
-      <div className="self-stretch lg:hidden">
-        <aside className="sticky top-[var(--navbar-offset)] flex w-16 shrink-0 flex-col items-center gap-1 rounded-3xl bg-white p-2 shadow-sm">
-          <button
-            type="button"
-            onClick={() => setIsExpanded(true)}
-            aria-label="Expand account menu"
-            className="mb-1 flex cursor-pointer items-center justify-center rounded-full p-2.5 text-gray-500 hover:bg-gray-100"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-
-          {allItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                aria-label={item.label}
-                aria-current={isActive(item.path) ? "page" : undefined}
-                className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors ${
-                  isActive(item.path) ? "bg-brand-blue text-white" : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-              </Link>
-            );
-          })}
-        </aside>
+      {/* ---------------- Below lg: single full-width menu button, sticky   */}
+      {/* below the navbar, page content scrolls underneath it.              */}
+<div className="sticky top-[var(--navbar-offset)] z-20 w-full bg-gray-100 py-1 transition-[top] duration-300 ease-in-out lg:hidden">
+  <button
+    type="button"
+    onClick={() => setIsExpanded(true)}
+    aria-label="Open account menu"
+    className="flex w-full cursor-pointer items-center justify-between rounded-3xl bg-white p-4 shadow-sm"
+  >
+          <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <Menu className="h-4 w-4 text-brand-blue" />
+            My Account
+          </span>
+          <ChevronRight className="h-4 w-4 text-gray-400" />
+        </button>
 
         {isExpanded && (
           <>

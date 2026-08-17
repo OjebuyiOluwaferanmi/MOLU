@@ -20,6 +20,10 @@ import Inbox from "./pages/users/Inbox";
 import MessageDetail from "./pages/users/MessageDetail";
 import RatingReviews from "./pages/users/RatingReviews";
 import CreditBalance from "./pages/users/CreditBalance";
+import { AddressProvider } from "./components/users/Address/AddressContext";
+import AddressBook from "./pages/users/AddressBook";
+import AccountManagement from "./pages/users/AccountManagement";
+
 
 // Routes where the scroll-to-top/cart FAB shouldn't appear.
 const HIDDEN_FAB_ROUTES = ["/login", "/signup", "/forgot-password"];
@@ -29,10 +33,12 @@ function App() {
   const hideFab = HIDDEN_FAB_ROUTES.includes(location.pathname);
 
   return (
+    <AddressProvider>
     <AuthProvider>
     <WishlistProvider>
     <CartProvider>
       <ScrollToTop />
+      
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/product/:id" element={<ProductDetails />} />
@@ -51,6 +57,8 @@ function App() {
           <Route path="inbox/:messageId" element={<MessageDetail />} />
           <Route path="reviews" element={<RatingReviews />} />
           <Route path="credit-balance" element={<CreditBalance />} />
+          <Route path="address" element={<AddressBook />} />
+          <Route path="profile" element={<AccountManagement />} />
         </Route>
       </Routes>
 
@@ -58,6 +66,8 @@ function App() {
     </CartProvider>
     </WishlistProvider>
     </AuthProvider>
+    </AddressProvider>
+
   )
 }
 

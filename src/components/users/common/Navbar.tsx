@@ -88,12 +88,12 @@ export default function Navbar() {
   // Publish the navbar's real rendered height as a CSS variable so other
   // fixed-position UI (e.g. AccountSidebar's sticky offset) can align
   // below it without duplicating this measurement logic.
-  useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--navbar-offset",
-      `${headerTopHeight + searchRowHeight}px`
-    );
-  }, [headerTopHeight, searchRowHeight]);
+useEffect(() => {
+    const visibleNavbarHeight = hideTopSection
+      ? searchRowHeight
+      : headerTopHeight + searchRowHeight;
+    document.documentElement.style.setProperty("--navbar-offset", `${visibleNavbarHeight}px`);
+  }, [headerTopHeight, searchRowHeight, hideTopSection]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -350,15 +350,23 @@ export default function Navbar() {
                 </MobileSection>
 
                 <MobileSection title="My Settings">
-                  {["Address Book", "Account Management", "Notifications"].map((item) => (
-                   <a 
-                      key={item}
-                      href="#"
-                      className="block cursor-pointer rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
-                    >
-                      {item}
-                    </a>
-                  ))}
+                 <Link
+  to="/account/address-book"
+  onClick={() => setMobileMenuOpen(false)}
+  className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+>
+  Address Book
+</Link>
+<Link
+  to="/account/settings"
+  onClick={() => setMobileMenuOpen(false)}
+  className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50"
+>
+  Account Management
+</Link>
+<a href="#" className="block rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-gray-50">
+  Notifications
+</a>
                 </MobileSection>
               </>
             )}
@@ -505,12 +513,16 @@ function AccountDropdown({
                   navigate(SETTINGS_ROUTES[k] ?? "#");
                 }}
               >
-                <Dropdown.Item id="address-book" textValue="Address Book" className="cursor-pointer">
-                  <Label className="text-black">Address Book</Label>
-                </Dropdown.Item>
-                <Dropdown.Item id="account-management" textValue="Account Management" className="cursor-pointer">
-                  <Label className="text-black">Account Management</Label>
-                </Dropdown.Item>
+                <Dropdown.Item id="address-book" textValue="Address Book">
+  <Link to="/account/address-book" className="block w-full">
+    <Label className="text-black">Address Book</Label>
+  </Link>
+</Dropdown.Item>
+<Dropdown.Item id="account-management" textValue="Account Management">
+  <Link to="/account/settings" className="block w-full">
+    <Label className="text-black">Account Management</Label>
+  </Link>
+</Dropdown.Item>
                 <Dropdown.Item id="notifications" textValue="Notifications" className="cursor-pointer">
                   <Label className="text-black">Notifications</Label>
                 </Dropdown.Item>
