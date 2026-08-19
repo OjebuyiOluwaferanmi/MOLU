@@ -28,7 +28,7 @@ interface LogoProps {
   asLink?: boolean;
   className?: string;
 }
-
+  
 export default function Logo({
   size = "md",
   linkTo = "/",

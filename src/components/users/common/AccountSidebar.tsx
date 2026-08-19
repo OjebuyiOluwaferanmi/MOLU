@@ -17,6 +17,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import PageContainer from "../common/PageContainer";
 
 interface NavItem {
   label: string;
@@ -35,10 +36,18 @@ const ACCOUNT_ITEMS: NavItem[] = [
 ];
 
 const SETTINGS_ITEMS: NavItem[] = [
-  { label: "Address Book", path: "/account/address", icon: MapPin },
-  { label: "Account Management", path: "/account/profile", icon: UserCog },
+  { label: "Address Book", path: "/account/address-book", icon: MapPin },
+  { label: "Account Management", path: "/account/settings", icon: UserCog },
   { label: "Notifications", path: "/account/notifications", icon: Bell },
 ];
+
+/** Shared active-path matching — used by both the desktop sidebar and the
+ * mobile menu, so they never disagree about what's "active". */
+function useIsAccountPathActive() {
+  const location = useLocation();
+  return (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
+}
 
 function NavRow({
   item,
@@ -65,10 +74,10 @@ function NavRow({
   );
 }
 
-/** Full labeled sidebar content — reused by both the static desktop
- * sidebar and the mobile expanded overlay, so nothing is duplicated.
- * `onClose` is only passed by the mobile overlay — when present, the
- * close (X) button renders inline next to "My Account". */
+/** Full labeled nav content — reused by both the static desktop sidebar
+ * and the mobile expanded overlay, so nothing is duplicated. `onClose` is
+ * only passed by the mobile overlay — when present, a close (X) button
+ * renders inline next to "My Account". */
 function SidebarContent({
   isActive,
   onNavigate,
@@ -118,17 +127,44 @@ function SidebarContent({
   );
 }
 
+/**
+ * Desktop-only static sidebar. Renders inside PageContainer alongside the
+ * page content, as part of the normal lg:flex-row layout — unchanged from
+ * before, this file only reorganizes the mobile side of things.
+ */
 export function AccountSidebar() {
-  const location = useLocation();
+  const isActive = useIsAccountPathActive();
+
+  return (
+    <aside className="sticky top-[var(--navbar-offset)] hidden w-64 shrink-0 flex-col rounded-3xl bg-white p-4 shadow-sm transition-[top] duration-300 ease-in-out lg:flex">
+      <SidebarContent isActive={isActive} />
+    </aside>
+  );
+}
+
+/**
+ * Mobile/tablet menu trigger.
+ * -----------------------------------------------------------------------
+ * Rendered as a SIBLING of PageContainer in AccountLayout — NOT nested
+ * inside it — so its background can span the true full viewport width,
+ * the same way Navbar/Footer achieve edge-to-edge backgrounds. Only the
+ * button *inside* it is wrapped in PageContainer, purely to align with
+ * the rest of the page's left/right margins.
+ *
+ * Its vertical padding (py-3 below) lives on the bar itself rather than
+ * being borrowed from page-level spacing, so it stays visually consistent
+ * whether the navbar above is fully shown or hidden-down-to-search-only.
+ *
+ * Background is bg-[#F1F1F1] to exactly match the page body — Tailwind's
+ * bg-gray-100 is a close but not identical hex, and that mismatch was
+ * almost certainly what looked like a stray shadow/seam before.
+ */
+export function MobileAccountMenu() {
+  const isActive = useIsAccountPathActive();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Matches the item's own path AND anything nested under it — e.g.
-  // "/account/orders" stays active while viewing "/account/orders/MLU-123".
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(`${path}/`);
-
-  // Lock page scroll while the mobile overlay is open — only the sidebar
-  // itself should scroll, not the page behind it.
+  // Lock page scroll while the overlay is open — only the drawer itself
+  // should scroll, not the page behind it.
   useEffect(() => {
     if (isExpanded) {
       const previousOverflow = document.body.style.overflow;
@@ -140,50 +176,40 @@ export function AccountSidebar() {
   }, [isExpanded]);
 
   return (
-    <>
-      {/* ---------------- Desktop: always-expanded static sidebar ---------------- */}
-      <aside className="sticky top-[var(--navbar-offset)] hidden w-64 shrink-0 flex-col rounded-3xl bg-white p-4 shadow-sm transition-[top] duration-300 ease-in-out lg:flex">
-        <SidebarContent isActive={isActive} />
-      </aside>
-
-      {/* ---------------- Below lg: single full-width menu button, sticky   */}
-      {/* below the navbar, page content scrolls underneath it.              */}
-<div className="sticky top-[var(--navbar-offset)] z-20 w-full bg-gray-100 py-1 transition-[top] duration-300 ease-in-out lg:hidden">
-  <button
-    type="button"
-    onClick={() => setIsExpanded(true)}
-    aria-label="Open account menu"
-    className="flex w-full cursor-pointer items-center justify-between rounded-3xl bg-white p-4 shadow-sm"
-  >
+    <div className="sticky top-[var(--navbar-offset)] z-20 w-full bg-[#F1F1F1] py-3 transition-[top] duration-300 ease-in-out lg:hidden">
+      <PageContainer>
+        <button
+          type="button"
+          onClick={() => setIsExpanded(true)}
+          aria-label="Open account menu"
+          className="flex w-full cursor-pointer items-center justify-between rounded-3xl bg-white p-4 shadow-sm"
+        >
           <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
             <Menu className="h-4 w-4 text-brand-blue" />
             My Account
           </span>
           <ChevronRight className="h-4 w-4 text-gray-400" />
         </button>
+      </PageContainer>
 
-        {isExpanded && (
-          <>
-            <div
-              className="fixed inset-0 z-30 bg-black/30"
-              onClick={() => setIsExpanded(false)}
-              aria-hidden="true"
+      {isExpanded && (
+        <>
+          <div
+            className="fixed inset-0 z-30 bg-black/30"
+            onClick={() => setIsExpanded(false)}
+            aria-hidden="true"
+          />
+          {/* Same drawer pattern as Navbar's own mobile menu — flush left,
+              spans navbar-bottom to viewport-bottom, scrolls internally. */}
+          <div className="fixed left-0 top-[var(--navbar-offset)] bottom-0 z-40 w-72 max-w-[85%] overflow-y-auto overscroll-contain bg-white p-4 shadow-lg">
+            <SidebarContent
+              isActive={isActive}
+              onNavigate={() => setIsExpanded(false)}
+              onClose={() => setIsExpanded(false)}
             />
-            {/* Flush against the left edge (no left margin), spans from
-                right below the navbar down to the bottom of the viewport,
-                and scrolls internally — same drawer pattern as the
-                Navbar's own mobile menu, so scrolling here no longer
-                bleeds through to the page behind it. */}
-            <div className="fixed left-0 top-[var(--navbar-offset)] bottom-0 z-40 w-72 max-w-[85%] overflow-y-auto overscroll-contain bg-white p-4 shadow-lg">
-              <SidebarContent
-                isActive={isActive}
-                onNavigate={() => setIsExpanded(false)}
-                onClose={() => setIsExpanded(false)}
-              />
-            </div>
-          </>
-        )}
-      </div>
-    </>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

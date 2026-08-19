@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
 import { Calendar, DateField, DatePicker, Dropdown, Label, Button } from "@heroui/react";
+import type { DateValue } from "@internationalized/date";
 import { AuthLayout } from "../../components/users/Auth/AuthLayout";
 import { SocialAuthButtons } from "../../components/users/Auth/SocialAuthButtons";
 import { AuthDivider } from "../../components/users/Auth/AuthDivider";
@@ -29,6 +30,20 @@ const GENDERS = [
 
 const inputClass =
   "rounded-full border border-gray-200 px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[#3654D6] focus:outline-none";
+
+/** Strips everything except digits and a single leading "+" — used on
+ * every phone input across the app so only numeric-looking values can
+ * ever reach state or get submitted (defense in depth alongside
+ * server-side validation once a real backend exists). */
+export function sanitizePhoneInput(raw: string): string {
+  let value = raw.replace(/[^\d+]/g, "");
+  if (value.startsWith("+")) {
+    value = "+" + value.slice(1).replace(/\+/g, "");
+  } else {
+    value = value.replace(/\+/g, "");
+  }
+  return value.slice(0, 16);
+}
 
 /** Styled trigger button shared by the Country and Gender dropdowns —
  * matches the pill look of the other inputs on this form. */
@@ -59,8 +74,10 @@ export default function Signup() {
   const navigate = useNavigate();
   const { signup } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone] = useState("");
   const [country, setCountry] = useState<string | null>(null);
   const [gender, setGender] = useState<string | null>(null);
+  const [dob, setDob] = useState<DateValue | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -72,7 +89,23 @@ export default function Signup() {
     const lastName = String(formData.get("lastName") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
-    const phone = String(formData.get("phone") ?? "").trim();
+
+    // Country and gender only ever get set via the dropdowns above, whose
+    // options are hardcoded to COUNTRIES/GENDERS — so there's no free-text
+    // path for either of these to be anything other than a whitelisted
+    // value by the time we get here.
+    if (!country) {
+      setError("Please select your country.");
+      return;
+    }
+    if (!gender) {
+      setError("Please select your gender.");
+      return;
+    }
+    if (phone.length < 7) {
+      setError("Please enter a valid phone number.");
+      return;
+    }
 
     const result = signup({
       firstName,
@@ -82,11 +115,7 @@ export default function Signup() {
       phone,
       country,
       gender,
-      // TODO: HeroUI's DatePicker value wasn't wired in yet — confirm its
-      // onChange/value API (likely returns a CalendarDate object, not a
-      // plain string) and capture it into state the same way country/
-      // gender are handled above, then swap this null for the real value.
-      dob: null,
+      dob: dob ? dob.toString() : null,
     });
 
     if (!result.success) {
@@ -189,15 +218,18 @@ export default function Signup() {
             </label>
             <input
               id="phone"
-              name="phone"
               type="tel"
+              inputMode="numeric"
               required
+              value={phone}
+              onChange={(e) => setPhone(sanitizePhoneInput(e.target.value))}
               placeholder="+234 800 000 0000"
               className={inputClass}
             />
           </div>
 
-          {/* Country — HeroUI Dropdown styled as a pill trigger */}
+          {/* Country — HeroUI Dropdown styled as a pill trigger. Only
+              way to set this value, so it's always one of COUNTRIES. */}
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-gray-700">Country</span>
             <Dropdown>
@@ -216,11 +248,14 @@ export default function Signup() {
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Date of Birth — HeroUI DatePicker. Not wired to submitted
-              data yet — see TODO above handleSubmit. */}
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-gray-700">Date of Birth</span>
-            <DatePicker className="w-full" name="dob" aria-label="Date of Birth">
+            <DatePicker
+              className="w-full"
+              name="dob"
+              aria-label="Date of Birth"
+              onChange={(value) => setDob(value)}
+            >
               <DateField.Group
                 fullWidth
                 className="!rounded-full !border !border-gray-200 !bg-white !px-4 !py-2.5 !shadow-none focus-within:!border-[#3654D6]"
@@ -260,7 +295,6 @@ export default function Signup() {
             </DatePicker>
           </div>
 
-          {/* Gender — HeroUI Dropdown styled as a pill trigger */}
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-gray-700">Gender</span>
             <Dropdown>

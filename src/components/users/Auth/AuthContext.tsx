@@ -42,6 +42,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => AuthResult;
   logout: () => void;
   updateUser: (updates: Partial<Omit<StoredUser, "id" | "password" | "createdAt">>) => void;
+  changePassword: (currentPassword: string, newPassword: string) => AuthResult;
 }
 
 const USERS_KEY = "molu_users";
@@ -130,8 +131,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({ ...user, ...updates });
   };
 
+  const changePassword: AuthContextValue["changePassword"] = (currentPassword, newPassword) => {
+    if (!user) return { success: false, error: "You must be signed in." };
+
+    const users = readUsers();
+    const found = users.find((u) => u.email.toLowerCase() === user.email.toLowerCase());
+    if (!found || found.password !== currentPassword) {
+      return { success: false, error: "Current password is incorrect." };
+    }
+
+    const updated = users.map((u) =>
+      u.email.toLowerCase() === user.email.toLowerCase() ? { ...u, password: newPassword } : u
+    );
+    writeUsers(updated);
+    return { success: true };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isSignedIn: !!user, signup, login, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{ user, isSignedIn: !!user, signup, login, logout, updateUser, changePassword }}
+    >
       {children}
     </AuthContext.Provider>
   );

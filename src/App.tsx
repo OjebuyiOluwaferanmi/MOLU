@@ -23,6 +23,7 @@ import CreditBalance from "./pages/users/CreditBalance";
 import { AddressProvider } from "./components/users/Address/AddressContext";
 import AddressBook from "./pages/users/AddressBook";
 import AccountManagement from "./pages/users/AccountManagement";
+import Notifications from "./pages/users/Notifications";
 
 
 // Routes where the scroll-to-top/cart FAB shouldn't appear.
@@ -57,8 +58,9 @@ function App() {
           <Route path="inbox/:messageId" element={<MessageDetail />} />
           <Route path="reviews" element={<RatingReviews />} />
           <Route path="credit-balance" element={<CreditBalance />} />
-          <Route path="address" element={<AddressBook />} />
-          <Route path="profile" element={<AccountManagement />} />
+          <Route path="address-book" element={<AddressBook />} />
+          <Route path="settings" element={<AccountManagement />} />
+          <Route path = "notifications" element={<Notifications />} />
         </Route>
       </Routes>
 

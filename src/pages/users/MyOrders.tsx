@@ -72,8 +72,10 @@ export default function MyOrders() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-semibold text-gray-900">{order.id}</p>
+                    {/* Status badge lives here on sm+ only — on mobile it
+                        moves down to share the price row instead. */}
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[order.status]}`}
+                      className={`hidden rounded-full px-2.5 py-0.5 text-[11px] font-semibold sm:inline-flex ${STATUS_STYLES[order.status]}`}
                     >
                       {STATUS_LABEL[order.status]}
                     </span>
@@ -85,17 +87,28 @@ export default function MyOrders() {
                   <p className="mt-0.5 text-xs text-gray-400">Placed on {formatDate(order.placedAt)}</p>
                 </div>
 
-                <div className="shrink-0 text-right">
-                  <p className="text-sm font-bold text-[#3654D6]">
-                    ₦{getOrderTotal(order).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {order.paymentStatus === "paid"
-                      ? "Paid"
-                      : order.paymentStatus === "refunded"
-                      ? "Refunded"
-                      : "Unpaid"}
-                  </p>
+                {/* On mobile: price+paid-status on the left, order status
+                    badge on the right, same line. On sm+: reverts to the
+                    original stacked, right-aligned block (badge hidden
+                    here since it's shown next to the Order ID instead). */}
+                <div className="flex shrink-0 items-center justify-between gap-2 sm:block sm:text-right">
+                  <div className="flex flex-col">
+                    <p className="text-sm font-bold text-[#3654D6]">
+                      ₦{getOrderTotal(order).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {order.paymentStatus === "paid"
+                        ? "Paid"
+                        : order.paymentStatus === "refunded"
+                        ? "Refunded"
+                        : "Unpaid"}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold sm:hidden ${STATUS_STYLES[order.status]}`}
+                  >
+                    {STATUS_LABEL[order.status]}
+                  </span>
                 </div>
               </Link>
             );
